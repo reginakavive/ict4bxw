@@ -1,0 +1,541 @@
+---
+title: "BXW OCCURRENCE DISTRIBUTION"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancyfoot[C]{\includegraphics[width=17cm]{footer.png}}
+  - \fancyhead[RO]{Combating Banana Disease Through Digital Technology}
+  - \fancyfoot[LE,RO]{\thepage}
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{logo.png}\LARGE\\}
+  - \posttitle{\end{center}}
+
+output: 
+  pdf_document
+  
+params:
+  c: NA
+  d: NA
+  e: NA
+  f: NA
+  g: NA
+  h: NA
+  i: NA
+  
+    
+---
+
+***
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, comment = NA)
+
+```
+
+## About the Project
+
+ICT4BXW project is a collaboration between the International Institute of Tropical Agriculture (IITA), Bioversity International, the Rwanda Agricultural and Animal Resources Development Board (RAB) and the Leibniz Institute of Agricultural Development in Transition Economies (IAMO). This work received financial support from the German Federal Ministry for Economic Cooperation and Development (BMZ), commissioned and administered through the Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) Fund for International Agricultural Research (FIA).
+
+In an effort to the help smallholder farmers fight banana disease, the  ICT4BXW project has developed an ICT-based tool to enable early warning system that provides [near] real-time georeferenced data on the incidence of the banana disease, Banana Xanthomonas Wilt (BXW),  for further visualization and pattern analysis, which can guide options for effective policies and/or measures to combat further spread of the disease in the region.
+
+
+
+## Overall Diagnosis Summary
+
+Below is a summary of BXW incidence dagnosis and users reached for all the years 
+
+```{r}
+cat(paste0("From: Oct 2019  To: Present"))
+cat(paste0("Total Diagnosis: ",length(bxw_data_e$Has.BXW)))
+cat(paste0("Total BXW occurrence: ",length((bxw_data_e[which(bxw_data_e$Has.BXW == "YES"), ])$Has.BXW)))
+cat(paste0("Total Users reached: ",length(unique(bxw_data_e$Farmer))))
+```
+
+```{r, out.width="100%",}
+#png("footer.png")
+knitr::include_graphics("footer1.png")
+
+```
+
+\newpage
+
+Figure 1 below shows total diagnosis for each year.
+
+```{r out.height="40%", out.width="100%"}
+ggplot(incidenceT, aes(x = format(month, "%Y"), y = Totaldiagnoses)) + 
+  geom_bar(width=0.7, fill="grey",position = 'dodge',  stat = "identity") +
+  geom_text(aes(label=Totaldiagnoses), position=position_dodge(width=0.7), vjust=-0.25, size=3)+
+  labs(x = "Year",y="Count", title = "Yearly Total Diagnosis")+
+  theme(panel.background =  element_blank(),
+        plot.background =element_blank(),
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size=10, face="bold",color = "black", hjust = 0.5 ),
+    strip.text.x = element_text(size = 10, color = "black", face = "bold"),
+    axis.text=element_text(color = "black",size=9),
+    axis.title = element_text(color = "black",size=9, face = "bold"),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 60, hjust = 1),
+    axis.text.y = element_text(angle = 90, hjust = 1),
+    legend.title = element_text(color = "black",face="bold", size = 10),
+    legend.text = element_text(color = "black", size = 10)
+    )
+    
+
+```
+
+&nbsp; &nbsp; &nbsp; &nbsp; Figure 1. Total diagnosis during 2019, 2020, and 2021 years 
+
+&nbsp; &nbsp; &nbsp;  
+
+The graphs below (Figure 2) below shows total users reached every year (overall total users reached: 2544) and the percentage of overall users reached grouped by gender.. 
+This is the number of unique farmers whose farms have been diagnosed over the years.
+
+&nbsp; &nbsp; &nbsp; 
+
+```{r out.height="50%", out.width="60%"}
+
+ggplot(usertotal, aes(x = format(month, "%Y"), y = Total)) + 
+  geom_bar(width=0.7, fill="grey",position = 'dodge',  stat = "identity") +
+  geom_text(aes(label=Total), position=position_dodge(width=0.7), vjust=-0.25, size=3)+
+  labs(x = "Year",y="Count", title = "Yearly Total Unique Users")+
+  theme(panel.background =  element_blank(),
+        plot.background =element_blank(),
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size=10, face="bold",color = "black", hjust = 0.5 ),
+    strip.text.x = element_text(size = 10, color = "black", face = "bold"),
+    axis.text=element_text(color = "black",size=9),
+    axis.title = element_text(color = "black",size=9, face = "bold"),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 60, hjust = 1),
+    axis.text.y = element_text(angle = 90, hjust = 1),
+    legend.title = element_text(color = "black",face="bold", size = 10),
+    legend.text = element_text(color = "black", size = 10)
+    )
+
+
+ggplot(userGenderO, aes(x="", y=per, fill=Gender)) +
+      geom_bar(stat="identity", width=1) +
+      coord_polar("y") +
+      scale_y_continuous(labels = scales::percent)+
+      geom_text(aes(label = paste(round(count / sum(count) * 100, 1), "%")),
+                position = position_stack(vjust = 0.5)) +
+      scale_fill_brewer(palette="Oranges",direction=-1, labels = c("Male", "Female"))+
+  labs(title = " Unique Users by Gender")+
+  theme(panel.background =  element_blank(),
+            plot.background =element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+         plot.title = element_text(size=10, face="bold",color = "black", hjust = 0.5 ),
+        axis.title = element_blank(),
+            axis.line.x = element_blank(),
+            axis.line.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank()
+      )
+  
+    
+```
+
+
+&nbsp; &nbsp; &nbsp; &nbsp; Figure 2. Total unique users/ farmers reached during 2019, 2020, and 2021 years and the overall percentage of male and female unique users/ farmers reached
+
+\newpage
+
+
+
+## BXW Diagnosis Trends
+
+
+The graph below (Figure 3) shows monthly total diagnosis perfomed for the three years.
+
+```{r  out.height="50%", out.width="80%"}
+ggplot(incidenceTotal, aes(x= month, y=Totaldiagnoses, group=1))+ 
+          geom_point(size=1, color= "orange")+
+          geom_line(size=0.7, color= "orange")+
+          #theme_bw(base_size = 24)+
+          labs(title="Trend of Total BXW Diagnosis", x="", y="Total Diagnosis")+
+  theme(panel.background =  element_blank(),
+        plot.background =element_blank(),
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size=10, face="bold",color = "black", hjust = 0.5 ),
+    strip.text.x = element_text(size = 10, color = "black", face = "bold"),
+    axis.text=element_text(color = "black",size=9),
+    axis.title = element_text(color = "black",size=9, face = "bold"),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 60, hjust = 1),
+    axis.text.y = element_text(angle = 90, hjust = 1),
+    legend.title = element_text(color = "black",face="bold", size = 10),
+    legend.text = element_text(color = "black", size = 10)
+    )
+  
+```
+
+&nbsp; &nbsp; &nbsp; &nbsp; Figure 3. Trend line for the total monthly diagnosis
+
+
+The graph below (Figure 4) shows trend of positive monthly bxw diagnosis for the three years.
+
+```{r  out.height="50%", out.width="80%"}
+
+incidenceGroupedY<-incidenceGrouped[which(incidenceGrouped$Has.BXW == "YES"), ]
+ggplot(incidenceGroupedY, aes(x= month, y=Total, group=Has.BXW,colour=Has.BXW))+ 
+          geom_point(size=1, color="red")+
+          geom_line(size=0.7, color = "red")+
+          #theme_bw(base_size = 24)+
+          labs(title="Trend of Positive BXW diagnosis", x="", y="No. of Diagnosis")+
+  theme(panel.background =  element_blank(),
+        plot.background =element_blank(),
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size=10, face="bold",color = "black", hjust = 0.5 ),
+    strip.text.x = element_text(size = 10, color = "black", face = "bold"),
+    axis.text=element_text(color = "black",size=9),
+    axis.title = element_text(color = "black",size=9, face = "bold"),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 60, hjust = 1),
+    axis.text.y = element_text(angle = 90, hjust = 1),
+    legend.title = element_text(color = "black",face="bold", size = 10),
+    legend.text = element_text(color = "black", size = 10)
+    )
+```
+
+&nbsp; &nbsp; &nbsp; &nbsp; Figure 4. Trend line for the positive monthly BXW diagnosis
+
+\newpage
+
+## Spatial Distribution: BXW Diagnosis 
+
+```{r out.height="100%", out.width="100%"}
+# diagnosisdata_filtered$Latitude<-as.numeric(diagnosisdata_filtered$Latitude)
+# diagnosisdata_filtered$Longitude<-as.numeric(diagnosisdata_filtered$Longitude)
+ggplot(bxw_data_e) +
+      geom_sf(data = distR, fill = "#f7f7f7", size = 0.1) +
+      geom_point(aes(x=Longitude,y=Latitude, color=Has.BXW))+
+  scale_colour_manual(labels=c("No", "YES"), values=c("green","red"))
+      #coord_sf(xlim = c(28.3, 31.2), ylim = c(-3, -1), expand = F)+
+      #labs(title="")+
+        
+```
+
+&nbsp; &nbsp; &nbsp; &nbsp; Figure 6. Spatial Distribution of BXW incidence in Rwanda from Oct, 2019 to present.
+
+
+<!-- ## Spatial Distribution: Scaling Enablers and Scaling Champions -->
+
+<!-- The map below shows sector level distribution of scaling champions (SCs) and scaling enablers (SEs) at sector level, selected for Phase II -->
+
+<!-- ```{r , out.width="70%"} -->
+
+<!-- knitr::include_graphics("SES.png") -->
+
+<!-- ``` -->
+\newpage
+
+## Analysis for the Selected Region and Time Period
+
+## District &nbsp; &nbsp; &nbsp; &nbsp; Sector  &nbsp; &nbsp; &nbsp; &nbsp;    Start Date &nbsp; &nbsp; &nbsp; &nbsp;  End Date
+
+```{r tw, results='asis'}
+cat(paste(params$c))
+```
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;
+```{r, results='asis'}
+if (params$c == "All"){
+  cat(paste("All"))
+}else {
+  cat(paste(params$d))
+  }
+```
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;
+```{r , results='asis'}
+cat(paste(params$e))
+```
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+```{r, results='asis'}
+cat(paste(params$f))
+```
+
+```{r}
+
+bxw_data_all<-bxw_data_e[c("Latitude","Longitude","Has.BXW","District","Sector","Cell","Village", "Date.Created")]
+  
+  
+  ##split date col year time.... keep date with full year
+  ##convert date
+  #bxw_data_all$Date.Created<-as.Date(bxw_data_all$Date.Created, tryFormats = c("%B", "%m","%Y-%m-%d", "%Y/%m/%d", "%m-%d", "%d-%m", "%d-%B") )
+  
+bxw_data_all$Date.Created <- as.Date(bxw_data_all$Date.Created, format = "%Y-%m-%d")
+  
+  #drop na in date col
+bxw_data_e<-na.omit(bxw_data_all)
+#bxw_data_e<-bxw_data
+```
+
+## Summary
+```{r}
+if (params$c == "All"){
+  bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+  cat(paste0("Total Diagnosis: ", as.character(length(bxw_data$Has.BXW))))
+}else if (params$c == params$c &&  params$d == "All"){
+  bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+  cat(paste0("Total Diagnosis: ", as.character(length(bxw_data$Has.BXW))))
+  
+}else if (params$c == params$c &&  params$d != "All") {
+  bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+  bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+  cat(paste0("Total Diagnosis: ", as.character(length(bxw_data$Has.BXW))))
+}
+
+##
+if (params$c == "All"){
+  bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+  cat(paste0("Total BXW Occurrence:", as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW))))
+}else if (params$c == params$c &&  params$d == "All"){
+  bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+  cat(paste0("Total BXW Occurrence:", as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW))))
+  
+}else if (params$c == params$c &&  params$d != "All") {
+  bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+  bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+  cat(paste0("Total BXW Occurrence:", as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW))))
+}
+
+##
+if (params$c == "All"){
+  bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+  if (params$e <= "2019-10-03"){
+    cat(paste("Change BXW Occurrence: ", "No previously existing data"))
+  }else if(params$e > Sys.time()){
+    cat(paste("Change BXW Occurrence: ", "No data"))
+  }else if (params$e > "2019-10-03"){
+    dat1 <-  bxw_data[which(bxw_data$Date.Created > params$e ), ]
+    leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
+    dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < params$e ), ]
+    leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
+    cha<-((leg1-leg2)/(leg1+leg2))*100
+    cat(paste("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%"))
+  }
+}else if (params$c == params$c &&  params$d == "All"){
+  bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+  if (params$e <= "2019-10-03"){
+    cat(paste("Change BXW Occurrence: ", "No previously existing data"))
+  }else if(params$e > Sys.time()){
+    cat(paste("Change BXW Occurrence: ", "No data"))
+  }else if (params$e > "2019-10-03"){
+    dat1 <-  bxw_data[which(bxw_data$Date.Created > params$e ), ]
+    leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
+    dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < params$e ), ]
+    leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
+    cha<-((leg1-leg2)/(leg1+leg2))*100
+    cat(paste("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%"))
+  }
+  
+}else if (params$c == params$c &&  params$d != "All") {
+  bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+  bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+  if (params$e <= "2019-10-03"){
+    cat(paste("Change BXW Occurrence: ", "No previously existing data"))
+  }else if(params$e > Sys.time()){
+    cat(paste("Change BXW Occurrence: ", "No data"))
+  }else if (params$e > "2019-10-03"){
+    dat1 <-  bxw_data[which(bxw_data$Date.Created > params$e ), ]
+    leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
+    dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < params$e ), ]
+    leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
+    cha<-((leg1-leg2)/(leg1+leg2))*100
+    cat(paste("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%"))
+  }
+}
+
+
+# if (params$c == "All"){
+#   bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+# 
+#   cat(paste0("Total Diagnosis: ", as.character(length(bxw_data$Has.BXW))))
+#   cat(paste0("Total BXW Occurrence:", as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW))))
+# 
+#   if (params$e <= "2019-10-03"){
+#     cat(paste("Change BXW Occurrence: ", "No previously existing data"))
+#   }else if(params$e > Sys.time()){
+#     cat(paste("Change BXW Occurrence: ", "No data"))
+#   }else if (params$e > "2019-10-03"){
+#     dat1 <-  bxw_data[which(bxw_data$Date.Created > params$e ), ]
+#     leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
+#     dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < params$e ), ]
+#     leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
+#     cha<-((leg1-leg2)/(leg1+leg2))*100
+#     cat(paste("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%"))
+#   }
+# }
+
+        
+# cat(paste0("Total Diagnosis: ", as.character(length(bxw_data$Has.BXW))))
+# cat(paste0("Total BXW Occurrence:", as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW))))
+# if (params$e <= "2019-10-03"){
+#       cat(paste("Change BXW Occurrence: ", "No previously existing data"))
+#     }else if(params$e > Sys.time()){
+#       cat(paste("Change in BXW Occurrence: ", "No data"))
+#     }else if (params$e > "2019-10-03"){
+#       dat1 <-  bxw_data[which(bxw_data$Date.Created > params$e ), ]
+#       leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
+#       dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < params$e ), ]
+#       leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
+#       cha<-((leg1-leg2)/(leg1+leg2))*100
+#       cat(paste("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%"))
+#     }
+#     
+  
+#paste0("Change BXW Occurrence: ", as.character(format(round(cha, 2), nsmall = 2)),"%" )
+```
+
+```{r, out.height="35%"}
+library(sp)
+library(latticeExtra)
+library(maptools)
+## MAP OF BXW OCCURRENCE
+if (params$c == "All"){
+  bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+  
+  par(mfrow=c(1,1), oma=c(7,1.5,0,0), mar=c(0,0,0,0), mai=c(0.07,0.2,0.5,0.0000000001))  
+  plot(rwa_shp,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+  plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+  #pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5,font=2, pos = 2)
+  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+  pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5)
+  Axis(side=1,cex = 0.7)
+  Axis(side=2,cex = 0.7)
+  legend('bottom',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 0.7, seg.len=1, bty = 'n')
+  
+}else if (params$c == params$c &&  params$d == "All"){
+  bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+  dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
+  
+  plot(dist,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+  #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+  pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
+  Axis(side=1)
+  Axis(side=2)
+  legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
+  
+}else if (params$c == params$c &&  params$d != "All") {
+  bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+  bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+  dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
+  
+  plot(dist,legend=F, main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+  #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+  pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
+  Axis(side=1)
+  Axis(side=2)
+  legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
+  
+  
+}
+
+
+```
+ 
+```{r, out.height="30%", out.width="80%"}
+##GRAPH BXW OCCURRENCE
+
+library(ggplot2)
+if (params$c == "All"){
+  bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+  bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
+          geom_bar(stat = "Count") +
+          labs(x = "Month",y="Count", title = "Monthly BXW occurrence for selected region and time period ")+
+          theme(panel.background = element_blank(),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                plot.title = element_text(size=16, face="bold",hjust = 0.5 ),
+                strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+                axis.text=element_text(color = "black",size=12),
+                axis.text.x = element_text(angle = 60, hjust = 1),
+                axis.title=element_text(size=12,face="bold"),
+                legend.title = element_text(color = "black",face="bold", size = 14),
+                legend.text = element_text(color = "black", size = 15),
+                axis.line.x = element_line(color="black", size = 0.3),
+                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
+                axis.line.y = element_line(color="black", size = 0.3))
+     
+  
+}else if (params$c == params$c &&  params$d == "All"){
+  bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+  bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
+          geom_bar(stat = "Count") +
+          labs(x = "Month",y="Count", title = "Monthly BXW occurrence for selected region and time period ")+
+          theme(panel.background = element_blank(),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                plot.title = element_text(size=14, face="bold",hjust = 0.5 ),
+                strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+                axis.text=element_text(color = "black",size=12),
+                axis.text.x = element_text(angle = 60, hjust = 1),
+                axis.title=element_text(size=12,face="bold"),
+                legend.title = element_text(color = "black",face="bold", size = 14),
+                legend.text = element_text(color = "black", size = 15),
+                axis.line.x = element_line(color="black", size = 0.3),
+                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
+                axis.line.y = element_line(color="black", size = 0.3))
+     
+  
+}else if (params$c == params$c &&  params$d != "All") {
+  bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+  bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+  bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+  bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+  ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
+          geom_bar(stat = "Count") +
+          labs(x = "Month",y="Count", title = "Monthly BXW occurrence for selected region and time period ")+
+          theme(panel.background = element_blank(),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                plot.title = element_text(size=14, face="bold",hjust = 0.5 ),
+                strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+                axis.text=element_text(color = "black",size=12),
+                axis.text.x = element_text(angle = 60, hjust = 1),
+                axis.title=element_text(size=12,face="bold"),
+                legend.title = element_text(color = "black",face="bold", size = 14),
+                legend.text = element_text(color = "black", size = 15),
+                axis.line.x = element_line(color="black", size = 0.3),
+                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
+                axis.line.y = element_line(color="black", size = 0.3))
+      
+  
+}
+```
+
+
