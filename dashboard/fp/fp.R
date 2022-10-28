@@ -90,7 +90,7 @@ them2<-theme(#panel.background = element_blank(),
   axis.line.y = element_line(color="black", size = 0.3)
   #axis.line.x = element_blank(),
   #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-  z#axis.line.y = element_blank()
+  #zaxis.line.y = element_blank()
 )
 
 them3<-theme(panel.background = element_blank(),
