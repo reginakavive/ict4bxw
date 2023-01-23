@@ -16,8 +16,7 @@ steps:
   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
   
 - name: Build image
-run: docker build -t main .
-# run the docker image supply the secrets from the github secrets store.
+run: docker build -t main
 - name: execute
 run: >
   docker run
