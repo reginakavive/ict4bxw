@@ -16,7 +16,7 @@ steps:
   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
   
 - name: Build image
-run: docker build -t main
+#run: docker build -t main
 - name: execute
 run: >
   docker run
