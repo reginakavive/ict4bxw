@@ -1,16 +1,20 @@
 library(rsconnect)
-
-rsconnect::setAccountInfo(name='kavive',
-                          token='10AD0DA1BB3536C1A85A8A37D6541EA9',
-                          secret='0X3z+idpqozRbwLTu4JlknKsjdlaFulVBcGfEJrK')
-deployApp()
-
-# style="position: absolute;right: 0px; background-image: url('pngs/downd.png');background-repeat:no-repeat;background-attachment:
-# fixed;background-size: cover;max-width: 100%;margin: 0px;overflow-x: hidden;overflow-y: scroll"
-
-library(rsconnect)
-#after changes...
-deployApp()
-y
-
-
+# a function to stop the script when one of the variables cannot be found. and to strip quotation marks from the secrets when you supplied them. (maybe it is just easier to never use them)
+error_on_missing_name <- function(name){
+  var <- Sys.getenv(name, unset=NA)
+  if(is.na(var)){
+    stop(paste0("cannot find ",name, " !"),call. = FALSE)
+  }
+  gsub("\"", '',var)
+}
+# Authenticate
+setAccountInfo(name = error_on_missing_name("SHINY_ACC_NAME"),
+               token = error_on_missing_name("TOKEN"),
+               secret = error_on_missing_name("SECRET"))
+# Deploy the application.
+deployApp(
+  appFiles = c("app.R" #, you can specify which files to deploy, 
+               #or keep this NULL to deploy everything
+  ),
+  appName = error_on_missing_name("MASTERNAME"),
+  appTitle = "BXW Real-Time Surveillance")
