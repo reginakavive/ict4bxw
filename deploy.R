@@ -7,7 +7,7 @@ error_on_missing_name <- function(name){
   }
   gsub("\"", '',var)
 }
-# Authenticate
+# Authenticate#
 setAccountInfo(name = error_on_missing_name("SHINY_ACC_NAME"),
                token = error_on_missing_name("TOKEN"),
                secret = error_on_missing_name("SECRET"))
