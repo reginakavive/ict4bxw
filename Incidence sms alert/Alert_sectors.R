@@ -4,14 +4,17 @@ library(magrittr)
 
 ##filter for bxw occurrences only
 
-incidenceGroupedY<-incidenceGroupedT[which(incidenceGroupedT$Has.BXW == "YES"), ]
+#incidenceGroupedY<-incidenceGroupedT[which(incidenceGroupedT$Has.BXW == "YES"), ]
 
-tail(dataregions)
-bxw_data_e$
-dataregions<-bxw_data_e
 
-dataregions %>% mutate(Cell = tolower(Cell))
+# #bxw_data_e$
+# dataregions<-bxw_data_e
+# tail(dataregions)
+# 
+# #to lower case - cell col
+# dataregions %>% mutate(Cell = tolower(Cell))
 
+#summary by month (no,yes)-total
 incidenceGroupedSectors1<-bxw_data_e %>%
   select(Has.BXW,District, Sector, Date.Created) %>%
   #drop_na()%>%
@@ -31,27 +34,28 @@ bxw_data_e %>%
   suppressWarnings()
 
 summary(dataregions)
-incidenceGroupedSectors1$
-View(incidenceGroupedSectors)
+
+View(incidenceGroupedSectors1)
 # sectordata_alert <- read.csv("C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence.csv", stringsAsFactors = FALSE)
 # head(sectordata_alert)
 
-incidenceGroupedSectors<-sectordata_alert %>%
-  select(District, Sector) %>%
-  #drop_na()%>%
-  group_by(District, Sector) %>%
-  #summarize(Totaldiagnoses = sum(Has_BXW))%>%
-  count() %>%
-  rename(Total = n) %>%
-  suppressWarnings()
-head(incidenceGroupedSectors)
+# incidenceGroupedSectors<-sectordata_alert %>%
+#   select(District, Sector) %>%
+#   #drop_na()%>%
+#   group_by(District, Sector) %>%
+#   #summarize(Totaldiagnoses = sum(Has_BXW))%>%
+#   count() %>%
+#   rename(Total = n) %>%
+#   suppressWarnings()
+# head(incidenceGroupedSectors)
+# 
+# write.csv(incidenceGroupedSectors,"C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence_grouped.csv")
+# 
+# 
+# sectordata_alert_all <- read.csv("C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence_all.csv", stringsAsFactors = FALSE)
+# head(sectordata_alert_all)
 
-write.csv(incidenceGroupedSectors,"C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence_grouped.csv")
-
-
-sectordata_alert_all <- read.csv("C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence_all.csv", stringsAsFactors = FALSE)
-head(sectordata_alert_all)
-
+#Group by sector-total. no,yes
 sectordata_alert_all <-bxw_data_e
 incidenceGroupedSectors_all<-sectordata_alert_all %>%
   select(Has.BXW,District, Sector) %>%
@@ -65,6 +69,7 @@ head(incidenceGroupedSectors_all)
 
 write.csv(incidenceGroupedSectors_all,"C:\\Users\\dell\\Documents\\WORK\\RAB_ICT4BXW\\BXW Alert initiate\\data\\Sector_Incidence_grouped_all.csv")
 
+#Group by sector-total.all
 incidenceGroupedSectors_total<-sectordata_alert_all %>%
   select(Has.BXW,District, Sector) %>%
   #drop_na()%>%
