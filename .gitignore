@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rproj
+Incidence sms alert/output/clean.csv
+Incidence sms alert/output/to_clean.csv
+Incidence sms alert/output/CurrentQuarterResults.csv
