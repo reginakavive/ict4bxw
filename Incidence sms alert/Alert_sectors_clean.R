@@ -4,7 +4,6 @@
 
 library(tidyverse)
 library(dplyr)
-library(dplyr)
 library(magrittr)
 
 #read diagnosis data
@@ -17,7 +16,7 @@ data_all<-diagnosis_data[c("Latitude","Longitude","Has.BXW","District","Sector")
 data_all<-na.omit(data_all)
 
 data_all<-data_all[!(data_all$Latitude=="" |data_all$Longitude==""| data_all$Has.BXW=="" |data_all$District==""| data_all$Sector==""), ]
-view(data_all)
+#view(data_all)
 
 
 #rename data values ..change case
@@ -39,9 +38,9 @@ summarydata<-dataclean %>%
   select(Has.BXW,District, Sector) %>%
   #drop_na()%>%
   group_by(District, Sector) %>%
-  summarise(Totaldiagnoses = n(),Totalincidence = sum(Has.BXW =="YES"))%>%
+  summarise(totalDiagnoses = n(),totalIncidence = sum(Has.BXW =="YES"))%>%
   suppressWarnings()
-View(summarydata)
+#View(summarydata)
 
 #WRITE CSV AND CLEAN ...check mispellings/inconsistensies of district and sectors and aggregate accordingly
 write.csv(summarydata,"Incidence sms alert/output/to_clean.csv")
@@ -49,13 +48,34 @@ write.csv(summarydata,"Incidence sms alert/output/to_clean.csv")
 
 #Read cleaned summary data
 summarydata_clean<- read.csv("Incidence sms alert/output/clean.csv", stringsAsFactors = FALSE)
+summarydata_clean<-as.data.frame(summarydata_clean)
 
-##CALCULATE INCIDENCE RATE and order
+#################################
+##CALCULATE INCIDENCE RATE 
 
+#first select sectors with more than 20 diagnoses
+select_sectors <- summarydata_clean[which(summarydata_clean$totalDiagnoses >=20), ]
+
+#calculate the incidence rate (2 dp)
+sectorincidencerate<-select_sectors%>%
+  dplyr:: mutate(incidenceRate=((select_sectors$totalIncidence/select_sectors$totalDiagnoses)*100))
+
+sectorincidencerate[,'incidenceRate']=round(sectorincidencerate[,'incidenceRate'],2)
+#View(sectorincidencerate)
+
+#Assign Levels  (High, medium, low)
+sectorincidencerate<-sectorincidencerate%>%
+  mutate(Level= case_when(
+    sectorincidencerate$incidenceRate >= 50 ~ "High",
+    sectorincidencerate$incidenceRate >= 20 & sectorincidencerate$incidenceRate < 50  ~ "Medium",
+    sectorincidencerate$incidenceRate < 20 ~ "Low"
+  ))
+  
+#view(sectorincidencerate)
 #write results
-write.csv(summarydata_clean,"Incidence sms alert/output/CurrentQuarterlyResults.csv")
-
+write.csv(sectorincidencerate,"Incidence sms alert/output/CurrentQuarterResults.csv")
 #save 
 #remember to paste the quarter's result in the quarterly spreadsheet (new sheet for each quarter) in the xlsx file 
 ###Sectors (BXW incidence level)-Quarterly update.xlsx
 ##also update dropbox
+
