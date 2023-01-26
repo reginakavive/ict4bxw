@@ -11,6 +11,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages("rsconnect", repos = "http://cran.us.r-project.org")
+          install.packages("remotes", repos = "http://cran.us.r-project.org")
           remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
       - name: Push to shinyapps.io
