@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: deploy-shiny
 
 jobs:
-  deploy-shiny:
+  build:
     runs-on: macOS-12
     steps:
       - uses: actions/checkout@v2
