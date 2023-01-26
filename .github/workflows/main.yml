@@ -7,15 +7,13 @@ jobs:
     runs-on: macOS-12
     steps:
       - uses: actions/checkout@v2
-     
-      - name: Install dependencies
-        run: |
-          install.packages("rsconnect", repos = "http://cran.us.r-project.org")
-          install.packages("remotes", repos = "http://cran.us.r-project.org")
-          remotes::install_deps(dependencies = TRUE)
-        shell: Rscript {0}
-      - name: Push to shinyapps.io
-        run: |
-          rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
-          rsconnect::deployApp(appName = 'bxwsurveillance')
-        shell: Rscript {0}
+      - name: Build image
+      run: docker build -t main . 
+     - name: execute
+        run: >
+          docker run 
+          -e SHINY_ACC_NAME=${{ secrets.SHINY_ACC_NAME }} 
+          -e TOKEN=${{secrets.TOKEN}} 
+          -e SECRET=${{secrets.SECRET}} 
+          -e MASTERNAME=${{secrets.MASTER_NAME}} 
+          main
