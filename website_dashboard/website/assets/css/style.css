@@ -296,11 +296,11 @@ iframe {
 }
 
 .navbar a:hover, .navbar .active, .navbar .active:focus, .navbar li:hover > a {
-  color: #d9ba85;
+  color: greenyellow;
 }
 
 .navbar a:hover, .navbar .active, .navbar .active:focus, .navbar li:hover > a {
-  color: #d9ba85;
+  color: greenyellow;
 }
 
 .navbar .dropdown ul {
@@ -505,7 +505,7 @@ iframe {
 }
 
 #hero h1 span {
-  color: #cda45e;
+  color: green;
 }
 
 #hero h2 {
@@ -516,6 +516,7 @@ iframe {
 
 #hero .btns {
   margin-top: 30px;
+  
 }
 
 #hero .btn-menu, #hero .btn-book {
@@ -529,11 +530,11 @@ iframe {
   transition: 0.3s;
   line-height: 1;
   color: white;
-  border: 2px solid #cda45e;
+  border: 2px solid green;
 }
 
 #hero .btn-menu:hover, #hero .btn-book:hover {
-  background: #cda45e;
+  background: green;
   color: #fff;
 }
 
@@ -544,7 +545,7 @@ iframe {
 #hero .play-btn {
   width: 94px;
   height: 94px;
-  background: radial-gradient(#cda45e 50%, rgba(205, 164, 94, 0.4) 52%);
+  background: radial-gradient(green 50%, rgba(172, 205, 94, 0.4) 52%);
   border-radius: 50%;
   display: block;
   position: relative;
@@ -583,14 +584,14 @@ iframe {
   animation-timing-function: steps;
   opacity: 1;
   border-radius: 50%;
-  border: 5px solid rgba(205, 164, 94, 0.7);
+  border: 5px solid rgba(172, 205, 94, 0.7);
   top: -15%;
   left: -15%;
   background: rgba(198, 16, 0, 0);
 }
 
 #hero .play-btn:hover::after {
-  border-left: 15px solid #cda45e;
+  border-left: 15px solid green;
   transform: scale(20);
 }
 
@@ -668,7 +669,7 @@ iframe {
 }
 
 /*--------------------------------------------------------------
-# Sections General
+# Sections General     #cda45e
 --------------------------------------------------------------*/
 section {
   padding: 60px 0;
@@ -710,7 +711,7 @@ section {
   font-size: 25px;
   font-weight: 700;
   font-family: "Playfair Display", serif;
-  color: #cda45e;
+  color: green;
 }
 
 /*--------------------------------------------------------------
@@ -990,7 +991,7 @@ section {
 .why-us .play-btn {
   width: 94px;
   height: 94px;
-  background: radial-gradient(#cda45e 50%, rgba(205, 164, 94, 0.4) 52%);
+  background: radial-gradient(green 50%, rgba(172, 205, 94, 0.4) 52%);
   border-radius: 50%;
   display: block;
   position: absolute;
@@ -1031,7 +1032,7 @@ section {
   animation-timing-function: steps;
   opacity: 1;
   border-radius: 50%;
-  border: 5px solid rgba(205, 164, 94, 0.7);
+  border: 5px solid rgba(172, 205, 94, 0.7);
   top: -15%;
   left: -15%;
   background: rgba(198, 16, 0, 0);
@@ -1159,7 +1160,7 @@ section {
 }
 
 .menu .menu-content a:hover {
-  color: #cda45e;
+  color: green;
 }
 
 .menu .menu-content span {
@@ -1187,32 +1188,32 @@ section {
 }
 
 .specials .nav-tabs {
-  border: 0;
+  border: 3;
 }
 
 .specials .nav-link {
-  border: 0;
+  border: 3;
   padding: 12px 15px;
   transition: 0.3s;
   color:#050505;
-  border-radius: 0;
+  border-radius: 3;
   border-right: 2px solid #cda45e;
   font-weight: 600;
   font-size: 15px;
 }
 
 .specials .nav-link:hover {
-  color: #cda45e;
+  color: olive;
 }
 
 .specials .nav-link.active {
   color: #1a1814;
-  background: #cda45e;
-  border-color: #cda45e;
+  background: olive;
+  border-color: olive;
 }
 
 .specials .nav-link:hover {
-  border-color: #cda45e;
+  border-color: olive;
 }
 
 .specials .tab-pane.active {
@@ -1262,7 +1263,7 @@ section {
 }
 
 .events .section-title h2 {
-  color: #cda45e;
+  color: green;
 }
 
 .events .container {
@@ -1287,7 +1288,7 @@ section {
 .events .event-item h3 {
   font-weight: 600;
   font-size: 26px;
-  color: #cda45e;
+  color: olivedrab;
 }
 
 .events .event-item .price {
@@ -1333,11 +1334,11 @@ section {
 }
 
 .events .swiper-pagination .swiper-pagination-bullet-active {
-  background-color: #cda45e;
+  background-color: yellowgreen;
 }
 
 /*--------------------------------------------------------------
-# Book A Table
+# B
 --------------------------------------------------------------*/
 .book-a-table .php-email-form {
   width: 100%;
@@ -1440,14 +1441,15 @@ section {
 
 .book-a-table .php-email-form button[type="submit"]:hover {
   background: #cda45e;
-}
+}*/
 
 /*--------------------------------------------------------------
 # Testimonials
 --------------------------------------------------------------*/
-/*.testimonials .testimonial-item {
+.testimonials .testimonial-item {
   box-sizing: content-box;
-  min-height: 200px;
+  
+  
 }
 
 .testimonials .testimonial-item .testimonial-img {
@@ -1473,7 +1475,7 @@ section {
 }
 .testimonials .testimonial-item:hover img {
   transform: scale(1.1);
-  color: ##050505 ;
+  color: #050505 ;
 }
 
 .testimonials .testimonial-item .quote-icon-left, .testimonials .testimonial-item .quote-icon-right {
@@ -1498,7 +1500,10 @@ section {
   font-style: italic;
   margin: 0 15px 0 15px;
   padding: 20px 20px 60px 20px;
-  background: #26231d;
+  max-height: 350px !important;
+    height: 350px !important;
+    overflow-y: auto !important;
+  /*background: #26231d;*/
   position: relative;
   border-radius: 6px;
   position: relative;
@@ -1507,7 +1512,6 @@ section {
 
 .testimonials .swiper-pagination {
   margin-top: 30px;
-  bottom:-20px;
   position: relative;
 }
 
@@ -1519,8 +1523,9 @@ section {
 }
 
 .testimonials .swiper-pagination .swiper-pagination-bullet-active {
-  background-color: #cda45e;
-}*/
+  background-color: yellowgreen;
+}
+
 
 /*--------------------------------------------------------------
 # Testimonials
@@ -1587,115 +1592,14 @@ section {
   height: 12px;
   background-color: #fff;
   opacity: 1;
-  border: 1px solid #cda45e;
+  border: 1px solid olive;
 }
 
 .testimonials .swiper-pagination .swiper-pagination-bullet-active {
-  background-color: #cda45e;
+  background-color: yellowgreen;
 }
 
 
-/*--------------------------------------------------------------
-# Gallery
---------------------------------------------------------------*/
-.gallery .gallery-item {
-  overflow: hidden;
-  border-right: 3px solid #454035;
-  border-bottom: 3px solid #454035;
-}
-
-.gallery .gallery-item img {
-  transition: all ease-in-out 0.4s;
-}
-
-.gallery .gallery-item:hover img {
-  transform: scale(1.1);
-}
-
-/*--------------------------------------------------------------
-# Chefs
---------------------------------------------------------------*/
-.chefs .member {
-  text-align: center;
-  margin-bottom: 20px;
-  background: #343a40;
-  position: relative;
-  overflow: hidden;
-}
-
-.chefs .member .member-info {
-  opacity: 0;
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  left: 0;
-  right: 0;
-  transition: 0.2s;
-}
-
-.chefs .member .member-info-content {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  transition: bottom 0.4s;
-}
-
-.chefs .member .member-info-content h4 {
-  font-weight: 700;
-  margin-bottom: 2px;
-  font-size: 18px;
-  color: #fff;
-}
-
-.chefs .member .member-info-content span {
-  font-style: italic;
-  display: block;
-  font-size: 13px;
-  color: #fff;
-}
-
-.chefs .member .social {
-  position: absolute;
-  left: 0;
-  bottom: -38px;
-  right: 0;
-  height: 48px;
-  transition: bottom ease-in-out 0.4s;
-  text-align: center;
-}
-
-.chefs .member .social a {
-  transition: color 0.3s;
-  color: #fff;
-  margin: 0 10px;
-  display: inline-block;
-}
-
-.chefs .member .social a:hover {
-  color: #cda45e;
-}
-
-.chefs .member .social i {
-  font-size: 18px;
-  margin: 0 2px;
-}
-
-.chefs .member:hover .member-info {
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 20%, rgba(0, 212, 255, 0) 100%);
-  opacity: 1;
-  transition: 0.4s;
-}
-
-.chefs .member:hover .member-info-content {
-  bottom: 60px;
-  transition: bottom 0.4s;
-}
-
-.chefs .member:hover .social {
-  bottom: 0;
-  transition: bottom ease-in-out 0.4s;
-}
 
 /*--------------------------------------------------------------
 # Contact
