@@ -33,7 +33,7 @@ jobs:
           rsconnect::deployApp(appName = 'bxwsurveillancett')
            
         shell: Rscript {0}
-      - name: Add chron job-incidence calc
+      - name: Add chron
         run: |
         install.packages('cronR',, repos = "http://cran.us.r-project.org")
         r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
