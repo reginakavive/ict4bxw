@@ -24,8 +24,8 @@ jobs:
           install.packages(c('cronR','rdrop2','Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 'maptools', 
                    'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','rgeos', 'rgdal','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview'
                     ), repos = "http://cran.us.r-project.org")
-          r <- cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
-          cron_add(r, frequency = "daily", id="job_1", at = "00:00", description = "update_data", ask = FALSE)
+          r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
+          cronR::cron_add(r, frequency = "daily", id="job_1", at = "00:00", description = "update_data", ask = FALSE)
           
         shell: Rscript {0}
       - name: Push to shinyapps.io
