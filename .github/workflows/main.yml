@@ -35,8 +35,6 @@ jobs:
           install.packages('cronR', repos = "http://cran.us.r-project.org")
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
           cronR::cron_add(r, frequency = "daily", id="job_1", at = "00:00", description = "update_data", ask = FALSE)
-          ag <- cronR::cron_rscript("data_sourcing/aggregate.R")
-          cronR::cron_add(ag, frequency = "daily", id="job_2", at = "03:00", description = "update_data2", ask = FALSE)
           
           
         shell: Rscript {0}
