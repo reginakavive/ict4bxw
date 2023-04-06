@@ -1,10 +1,13 @@
-
+#A CHRON JOB HAS BEEN SET UP VIA GITHUB ACTIONS TO RUN THIS EVERY THREE MONTHS (1ST) 
+# Output saved as csv for each quarter on dropbox (shared folder)
+#link to output folder:https://www.dropbox.com/scl/fo/ora1htqx56dsydeu3aipo/h?dl=0&rlkey=6c0jdyeej0wqh0zj7eth8n2is
 
 ##START HERE
 
 library(tidyverse)
 library(dplyr)
 library(magrittr)
+library(rdrop2)
 
 #read diagnosis data
 diagnosis_data <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
@@ -42,13 +45,16 @@ summarydata<-dataclean %>%
   suppressWarnings()
 #View(summarydata)
 
-#WRITE CSV AND CLEAN ...check mispellings/inconsistensies of district and sectors and aggregate accordingly
-write.csv(summarydata,"Incidence sms alert/output/to_clean.csv")
-#after cleaning save as clean.csv
+# #WRITE CSV AND CLEAN ...check mispellings/inconsistensies of district and sectors and aggregate accordingly
+# write.csv(summarydata,"Incidence sms alert/output/to_clean.csv")
+# #after cleaning save as clean.csv
+# 
+# #Read cleaned summary data
+# summarydata_clean<- read.csv("Incidence sms alert/output/clean.csv", stringsAsFactors = FALSE)
+# summarydata_clean<-as.data.frame(summarydata_clean)
 
-#Read cleaned summary data
-summarydata_clean<- read.csv("Incidence sms alert/output/clean.csv", stringsAsFactors = FALSE)
-summarydata_clean<-as.data.frame(summarydata_clean)
+#skip above for automation
+summarydata_clean<- as.data.frame(summarydata)
 
 #################################
 ##CALCULATE INCIDENCE RATE 
@@ -72,10 +78,26 @@ sectorincidencerate<-sectorincidencerate%>%
   ))
   
 #view(sectorincidencerate)
-#write results
-write.csv(sectorincidencerate,"Incidence sms alert/output/CurrentQuarterResults.csv")
-#save 
-#remember to paste the quarter's result in the quarterly spreadsheet (new sheet for each quarter) in the xlsx file 
-###Sectors (BXW incidence level)-Quarterly update.xlsx
-##also update dropbox
+#write results (with month/year suffix)
+m.y<- as.character (format(Sys.time(), "%Y-%m"))
+path<-paste0("Incidence sms alert/output/QuarterlyIncidenceResults.",m.y, ".csv")
+write.csv(sectorincidencerate,path)
+#saved to csv locally 
+
+#save file to dropbox for access by the team or authorized personnel for SMS disbursement
+#dropbox authentication
+rdrop2::drop_auth(
+  new_user = FALSE,
+  key = "${{secrets.DRP_KEY}}",
+  secret = "${{secrets.DRP_SECRET}}",
+  cache = TRUE,
+  rdstoken = NA
+)
+#Upload to dropbox shared folder
+dropbox.path<-file.path("ICT4BXW_Regina_Outputs/BXW Quarterly Incidence/")
+rdrop2::drop_upload(path,dropbox.path)
+
+
+
+
 
