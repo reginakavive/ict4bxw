@@ -7,7 +7,7 @@ library(dplyr)
 library(magrittr)
 
 #read diagnosis data
-diagnosis_data <- read.csv("website_dashboard/surveillance_dash/data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
+diagnosis_data <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
 #### select loc, district sector, diagnosis...from diagnosis data
 data_all<-diagnosis_data[c("Latitude","Longitude","Has.BXW","District","Sector")]
 

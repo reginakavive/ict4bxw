@@ -28,6 +28,6 @@ jobs:
       - name: Push to shinyapps.io
         run: |
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
-          rsconnect::deployApp(appName = 'bxwsurve2')
+          rsconnect::deployApp(appName = 'bxwsurveillancett')
            
         shell: Rscript {0}
