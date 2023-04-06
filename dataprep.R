@@ -2,6 +2,7 @@
 
 footer <- readPNG("data/footer.png")
 
+#to update after aggregation in data sourcing folder
 bxw_diagnosis <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
 sectors <- read.csv("data/sectors.csv", stringsAsFactors = FALSE)
 
