@@ -7,6 +7,7 @@ dataprep.R: Data preparation script read into app.R
 part.R: functions and variables definitions
 deploy.R: script to enable auto deploy to shinyapps.io on push/pull-request merge
 .github/workflows/main.yml :for automating workflows on GitHub actions
+data: folder contains required data + reporting script (report.Rmd)
 
 website_dashboard: code for website (with the embedded dashboard) www.ict4bxw.com;
            automatically updated and deployed on digital ocean server on push/pull-request merge
