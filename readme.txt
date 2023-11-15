@@ -1,5 +1,7 @@
 
-A shinyapp for real-time surveillance of BXW
+REAL-TIME SURVEILLANCE DASHBOARD
+
+A shiny app for real-time surveillance of BXW
 Automatically updates(deploys to shinyapps.io) on push/ pull-request 
 
 app.R: main dashboard (with server and ui functions)
@@ -9,5 +11,7 @@ deploy.R: script to enable auto deploy to shinyapps.io on push/pull-request merg
 .github/workflows/main.yml :for automating workflows on GitHub actions
 data: folder contains required data + reporting script (report.Rmd)
 
-website_dashboard: code for website (with the embedded dashboard) www.ict4bxw.com;
-           automatically updated and deployed on digital ocean server on push/pull-request merge
+
+MAIN WEBSITE
+website_dashboard: code for the website (with the embedded dashboard) www.ict4bxw.com;
+           automatically updated and deployed on the Digital Ocean server on push/pull-request merge
