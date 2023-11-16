@@ -13,13 +13,7 @@ jobs:
       
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: |
-            any::rgdal 
-            any::rgeos
-            any::maptools
-            any::rdrop2
-
+        
         run: |
           install.packages("rsconnect", repos = "http://cran.us.r-project.org")
           install.packages("shiny", repos = "http://cran.us.r-project.org")
