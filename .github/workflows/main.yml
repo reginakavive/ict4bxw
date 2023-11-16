@@ -30,6 +30,10 @@ jobs:
         shell: Rscript {0}
       - name: Push to shinyapps.io
         run: |
+          sudo Rscript -e "install.packages('rgeos')"
+          sudo Rscript -e "install.packages('rgdal')"
+          sudo Rscript -e "install.packages('rdrop2')"
+          sudo Rscript -e "install.packages('maptools')"
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
           rsconnect::deployApp(appName = 'bxwsurveillancettF',forceUpdate = TRUE)
           
