@@ -23,7 +23,7 @@ jobs:
           
           
           install.packages(c('Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 'maptools', 
-                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview'
+                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview','rgeos', 'rgdal'
                     ), repos = "http://cran.us.r-project.org")
           
           
@@ -31,7 +31,7 @@ jobs:
       - name: Push to shinyapps.io
         run: |
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
-          rsconnect::deployApp(appName = 'bxwsurveillancettF')
+          rsconnect::deployApp(appName = 'bxwsurveillancettF',forceUpdate = TRUE)
           
           install.packages('cronR', repos = "http://cran.us.r-project.org")
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
