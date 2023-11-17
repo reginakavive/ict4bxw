@@ -19,21 +19,16 @@ jobs:
           install.packages("units", repos = "http://cran.us.r-project.org") 
           install.packages("remotes", repos="http://cran.us.r-project.org")
           install.packages("sp", repos="http://cran.us.r-project.org")
-          install.packages("rdrop2", repos="http://cran.us.r-project.org")
           
           
-          install.packages(c('Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 'maptools', 
-                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview','rgeos', 'rgdal'
+          install.packages(c('Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 
+                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview'
                     ), repos = "http://cran.us.r-project.org")
           
           
         shell: Rscript {0}
       - name: Push to shinyapps.io
         run: |
-          sudo Rscript -e "install.packages('rgeos')"
-          sudo Rscript -e "install.packages('rgdal')"
-          sudo Rscript -e "install.packages('rdrop2')"
-          sudo Rscript -e "install.packages('maptools')"
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
           rsconnect::deployApp(appName = 'bxwsurveillancettF',forceUpdate = TRUE)
           
