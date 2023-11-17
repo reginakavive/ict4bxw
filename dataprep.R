@@ -6,19 +6,23 @@ footer <- readPNG("data/footer.png")
 bxw_diagnosis <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
 sectors <- read.csv("data/sectors.csv", stringsAsFactors = FALSE)
 
-rwa_shp <- rgdal::readOGR(dsn   = "data/shp",
-                          layer = "rwa_o", 
-                          stringsAsFactors = FALSE)
+#rwa_shp <- rgdal::readOGR(dsn   = "data/shp",
+ #                         layer = "rwa_o", 
+  #                        stringsAsFactors = FALSE)
 
-rwad_shp <- rgdal::readOGR(dsn   = "data/shp",
-                           layer = "rwa_d", 
-                           stringsAsFactors = FALSE)
+#rwad_shp <- rgdal::readOGR(dsn   = "data/shp",
+ #                          layer = "rwa_d", 
+ #                          stringsAsFactors = FALSE)
 
-rwas_shp <- rgdal::readOGR(dsn   = "data/shp/rwa_sector",
-                           layer = "Sector", 
-                           stringsAsFactors = FALSE)
+#rwas_shp <- rgdal::readOGR(dsn   = "data/shp/rwa_sector",
+ #                          layer = "Sector", 
+  #                         stringsAsFactors = FALSE)
+                           
+
+rwa_shp <- st_read("data/shp/rwa_o.shp")
+rwad_shp <- st_read("data/shp/rwa_d.shp")
+rwas_shp <- st_read("data/data/shp/rwa_sector/Sector.shp")
 distR <- st_read("data/gadm36_RWA_shp/gadm36_RWA_2.shp")
-
 
 ######Clean Data##########
 #subset for required cols
