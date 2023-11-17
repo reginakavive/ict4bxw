@@ -21,7 +21,7 @@ sectors <- read.csv("data/sectors.csv", stringsAsFactors = FALSE)
 
 rwa_shp <- st_read("data/shp/rwa_o.shp")
 rwad_shp <- st_read("data/shp/rwa_d.shp")
-rwas_shp <- st_read("data/data/shp/rwa_sector/Sector.shp")
+rwas_shp <- st_read("data/shp/rwa_sector/Sector.shp")
 distR <- st_read("data/gadm36_RWA_shp/gadm36_RWA_2.shp")
 
 ######Clean Data##########
