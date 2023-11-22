@@ -1,9 +1,14 @@
 #to automate script #chron daily on git actions
 #to be updated when chatbot is stabilized
 
-#get data from firebase database
+################################################
+#get data from firebase database  ###### refer to firebaseimport.R SCRIPT####
+
 #get chatbot data
 #-daily dates update on chatbot data
+
+#AGGREGATE
+
 #-rename columns
 #-clean data
 #bind_rows to combine data

@@ -10,7 +10,8 @@ library(magrittr)
 library(rdrop2)
 
 #read diagnosis data
-diagnosis_data <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
+#diagnosis_data <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
+diagnosis_data <- read.csv("data/Diagnosis_result_Direct.csv", stringsAsFactors = FALSE)
 #### select loc, district sector, diagnosis...from diagnosis data
 data_all<-diagnosis_data[c("Latitude","Longitude","Has.BXW","District","Sector")]
 

@@ -35,7 +35,7 @@ jobs:
           install.packages('cronR', repos = "http://cran.us.r-project.org")
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
           r2 <- cronR::cron_rscript("firebaseimport.R")
-          cronR::cron_add(r, frequency = "daily", id="job_1", at = "00:00", description = "update_data", ask = FALSE)
+          cronR::cron_add(r, frequency = 'monthly', id = 'job_1', at = '01:00', days_of_month = 'first', days_of_week = '*', description = "update_data", ask = FALSE)
           cronR::cron_add(r2, frequency = "daily", id="job_2", at = "00:00", description = "fire_data_update", ask = FALSE)
           
         shell: Rscript {0}
