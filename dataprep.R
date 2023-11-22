@@ -3,7 +3,9 @@
 footer <- readPNG("data/footer.png")
 
 #to update after aggregation in data sourcing folder
-bxw_diagnosis <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
+#bxw_diagnosis <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
+bxw_diagnosis <- read.csv("data/Diagnosis_result_Direct.csv", stringsAsFactors = FALSE)
+
 sectors <- read.csv("data/sectors.csv", stringsAsFactors = FALSE)
 
 #rwa_shp <- rgdal::readOGR(dsn   = "data/shp",
@@ -25,6 +27,8 @@ rwas_shp <- st_read("data/shp/rwa_sector/Sector.shp")
 distR <- st_read("data/gadm36_RWA_shp/gadm36_RWA_2.shp")
 
 ######Clean Data##########
+bxw_diagnosis <- na.omit(bxw_diagnosis)
+
 #subset for required cols
 #head(bxw_data)
 diagnosisdata<-bxw_diagnosis
@@ -44,15 +48,15 @@ CreatedDate<-gsub("T", " ",CreatedDate)
 CreatedDate<-separate(data.frame(CreatedDate),CreatedDate[1], into = c("Date_Created", "Time"), sep = " ",
                       extra = "merge")
 
-diagnosisdata1<-diagnosisdata[c("Farmer","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village")]
+diagnosisdata1<-diagnosisdata[c("id","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village")]
 diagnosisdata2<-cbind( diagnosisdata1, CreatedDate)
 
 
 diagnosisdata2$Date_Created<-as.Date(diagnosisdata2$Date_Created,  format = "%Y-%m-%d" )
 
 #rename male and females, f or M to Gitsina Gore, Gore, gabo
-tail(diagnosisdata2)
-diagnosisdata_filtered<-diagnosisdata2[c("Farmer","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village", "Date_Created")]
+#tail(diagnosisdata2)
+diagnosisdata_filtered<-diagnosisdata2[c("id","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village", "Date_Created")]
 
 diagnosisdata_filtered<-diagnosisdata_filtered%>%
   replace_with_na(replace = list(Date_Created = ""))%>%
@@ -65,6 +69,8 @@ diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="f"]<-"Gitsina Gore
 diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="Male"]<-"Gitsina Gabo" 
 diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="M"]<-"Gitsina Gabo" 
 diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="m"]<-"Gitsina Gabo"
+diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="male"]<-"Gitsina Gabo" 
+diagnosisdata_filtered$Gender[diagnosisdata_filtered$Gender=="female"]<-"Gitsina Gore" 
 
 diagnosisdata_filtered$Date_Created <- as.Date(diagnosisdata_filtered$Date_Created, format = "%Y-%m-%d")
 
@@ -73,22 +79,22 @@ diagnosisdata_filtered1<-diagnosisdata_filtered%>%
   rename(Has.BXW = Has_BXW,
          Date.Created = Date_Created)
 
-bxw_data_all<-diagnosisdata_filtered1[c("Farmer","Gender","Latitude","Longitude","Has.BXW","District","Sector","Cell","Village", "Date.Created")]
+bxw_data_all<-diagnosisdata_filtered1[c("id","Gender","Latitude","Longitude","Has.BXW","District","Sector","Cell","Village", "Date.Created")]
 
 
 bxw_data_e<-bxw_data_all
 bxw_data_f<-bxw_data_e
 
 
-bxw_data_f %>% distinct(Farmer,  .keep_all = TRUE)
+bxw_data_f %>% distinct(id,  .keep_all = TRUE)
 
 bxw_data_f<- bxw_data_f[which(bxw_data_f$Gender == c("Gitsina Gabo","Gitsina Gore") ), ]
 
 
 
 bxw_data_h<-bxw_data_e %>%
-  select(Farmer,Gender, Date.Created) %>%
-  distinct(Farmer,  .keep_all = TRUE)%>%
+  select(id,Gender, Date.Created) %>%
+  distinct(id,  .keep_all = TRUE)%>%
   group_by(Gender) %>%
   drop_na()%>%
   summarise(count = n()) %>%
@@ -111,8 +117,8 @@ incidenceT<-bxw_data_e %>%
 
 
 usertotalT<-bxw_data_e %>%
-  select(Farmer, Date.Created) %>%
-  distinct(Farmer,  .keep_all = TRUE)%>%
+  select(id, Date.Created) %>%
+  distinct(id,  .keep_all = TRUE)%>%
   #drop_na()%>%
   group_by(month = lubridate::floor_date(Date.Created, "year")) %>%
   #summarize(Totaldiagnoses = sum(Has_BXW))%>%
@@ -162,8 +168,8 @@ incidenceGrouped<-bxw_data_e %>%
 
 ### total diagnosis by year grouped per gender, male  or female.... bar graph percentage graph
 userGender<-bxw_data_e %>%
-  select(Farmer,Gender, Date.Created) %>%
-  distinct(Farmer,  .keep_all = TRUE)%>%
+  select(id,Gender, Date.Created) %>%
+  distinct(id,  .keep_all = TRUE)%>%
   #drop_na()%>%
   group_by(month = lubridate::floor_date(Date.Created, "year"),Gender) %>%
   #summarize(Totaldiagnoses = sum(Has_BXW))%>%
@@ -174,8 +180,8 @@ userGender<-bxw_data_e %>%
 
 #Unique users/farmers reached by year
 usertotal<-bxw_data_e %>%
-  select(Farmer, Date.Created) %>%
-  distinct(Farmer,  .keep_all = TRUE)%>%
+  select(id, Date.Created) %>%
+  distinct(id,  .keep_all = TRUE)%>%
   #drop_na()%>%
   group_by(month = lubridate::floor_date(Date.Created, "year")) %>%
   #summarize(Totaldiagnoses = sum(Has_BXW))%>%
@@ -187,8 +193,8 @@ usertotal<-bxw_data_e %>%
 #head(userGenderO)
 #overal by gender
 userGenderO<-bxw_data_e %>%
-  select(Farmer,Gender, Date.Created) %>%
-  distinct(Farmer,  .keep_all = TRUE)%>%
+  select(id,Gender, Date.Created) %>%
+  distinct(id,  .keep_all = TRUE)%>%
   group_by(Gender) %>%
   drop_na()%>%
   summarise(count = n()) %>%
@@ -217,4 +223,4 @@ groupbydist<-bxw_data_e %>%
   rename(Total = n) %>%
   suppressWarnings()
 
-groupbydist
+#groupbydist

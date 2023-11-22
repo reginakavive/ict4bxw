@@ -5,7 +5,8 @@ A shiny app for real-time surveillance of BXW
 Automatically updates(deploys to shinyapps.io) on push/ pull-request 
 
 app.R: main dashboard (with server and ui functions)
-dataprep.R: Data preparation script read into app.R
+firebaseimport.R imports data from firebase via API + data cleaning (runs daily)
+dataprep.R: Data preparation/aggregation script. Reads into app.R
 part.R: functions and variables definitions
 deploy.R: script to enable auto deploy to shinyapps.io on push/pull-request merge
 .github/workflows/main.yml :for automating workflows on GitHub actions
