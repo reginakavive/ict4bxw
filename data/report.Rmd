@@ -403,64 +403,101 @@ if (params$c == "All"){
 ```
 
 ```{r, out.height="35%"}
-library(sp)
-library(latticeExtra)
-library(maptools)
-## MAP OF BXW OCCURRENCE
+
 if (params$c == "All"){
   bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
-  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
   
-  par(mfrow=c(1,1), oma=c(7,1.5,0,0), mar=c(0,0,0,0), mai=c(0.07,0.2,0.5,0.0000000001))  
-  plot(rwa_shp,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
-  plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
-  #pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5,font=2, pos = 2)
-  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
-  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
-  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
-  pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5)
-  Axis(side=1,cex = 0.7)
-  Axis(side=2,cex = 0.7)
-  legend('bottom',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 0.7, seg.len=1, bty = 'n')
-  
+ggplot(bxw_data) +
+      geom_sf(data = distR, fill = "#f7f7f7", size = 0.1) +
+      geom_point(aes(x=Longitude,y=Latitude, color=Has.BXW))+
+  scale_colour_manual(labels=c("No", "YES"), values=c("green","red"))
+
 }else if (params$c == params$c &&  params$d == "All"){
   bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
   bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
-  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
   dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
   
-  plot(dist,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
-  #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
-  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
-  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
-  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
-  pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
-  Axis(side=1)
-  Axis(side=2)
-  legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
-  
+  ggplot(bxw_data) +
+      geom_sf(data = dist, fill = "#f7f7f7", size = 0.1) +
+      geom_point(aes(x=Longitude,y=Latitude, color=Has.BXW))+
+  scale_colour_manual(labels=c("No", "YES"), values=c("green","red"))
+
 }else if (params$c == params$c &&  params$d != "All") {
   bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
   bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
   bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
-  YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-  NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
   dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
   
-  plot(dist,legend=F, main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
-  #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
-  #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
-  points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
-  points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
-  pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
-  Axis(side=1)
-  Axis(side=2)
-  legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
-  
-  
+   ggplot(bxw_data) +
+      geom_sf(data = dist, fill = "#f7f7f7", size = 0.1) +
+      geom_point(aes(x=Longitude,y=Latitude, color=Has.BXW))+
+  scale_colour_manual(labels=c("No", "YES"), values=c("green","red"))
 }
+
+
+
+```
+
+
+```{r, out.height="35%"}
+# library(sp)
+# library(latticeExtra)
+# #library(maptools)
+# ## MAP OF BXW OCCURRENCE
+# if (params$c == "All"){
+#   bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= params$e  & bxw_data_e$Date.Created <= params$f), ]
+#   YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+#   NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+#   
+#   par(mfrow=c(1,1), oma=c(7,1.5,0,0), mar=c(0,0,0,0), mai=c(0.07,0.2,0.5,0.0000000001))  
+#   plot(rwa_shp,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+#   plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+#   #pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5,font=2, pos = 2)
+#   #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+#   points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+#   points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+#   #pointLabel(coordinates(rwad_shp),labels=rwad_shp$NAME_2,cex = .5)
+#   Axis(side=1,cex = 0.7)
+#   Axis(side=2,cex = 0.7)
+#   legend('bottom',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 0.7, seg.len=1, bty = 'n')
+#   
+# }else if (params$c == params$c &&  params$d == "All"){
+#   bxw_data_d <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+#   bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= params$e & bxw_data_d$Date.Created <= params$f), ]
+#   YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+#   NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+#   dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
+#   
+#   plot(dist,legend=F,main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+#   #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+#   #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+#   points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+#   points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+#   pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
+#   Axis(side=1)
+#   Axis(side=2)
+#   legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
+#   
+# }else if (params$c == params$c &&  params$d != "All") {
+#   bxw_data_s <- bxw_data_e[which(bxw_data_e$District == params$c), ]
+#   bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == params$d), ]
+#   bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= params$e  & bxw_data_s$Date.Created <= params$f ), ]
+#   YES<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+#   NO<- bxw_data[which(bxw_data$Has.BXW =="NO" ), ]
+#   dist<-(rwad_shp[rwad_shp$NAME_2==params$c, ])
+#   
+#   plot(dist,legend=F, main="BXW occurrence distribution of selected region and time period", axes=F, box=F,lwd=0.3, border="black", cex=16)
+#   #plot(rwad_shp,add= T, legend=F, axes=F, box=F,lwd=0.2, border="grey")
+#   #points(bxw_data$Longitude, bxw_data$Latitude, add= T, col="red", cex = .6)
+#   points(NO$Longitude,NO$Latitude, add=TRUE, col='green',pch=19, cex= .6)
+#   points(YES$Longitude,YES$Latitude, add=TRUE, col='red',pch=19, cex= .6)
+#   pointLabel(coordinates(dist),labels=dist$NAME_2,cex = .5, pos = 2)
+#   Axis(side=1)
+#   Axis(side=2)
+#   legend('right',legend = c("BXW Occurrence","No BXW Occurrence"), col = c("red","green"),pch=19,  xpd = TRUE, horiz = TRUE,  cex = 1.0, seg.len=1, bty = 'n')
+#   
+#   
+# }
 
 
 ```
