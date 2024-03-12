@@ -1,10 +1,10 @@
 on:
   push:
     branches:
-      - main
+      - DEV
   pull_request:
     branches:
-      - main
+      - DEV
   schedule:
     - cron: '0 0 * * 0,3'
   
