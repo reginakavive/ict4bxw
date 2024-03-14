@@ -6,7 +6,7 @@ on:
     branches:
       - DEV
   schedule:
-    - cron: '0 0 * * 0,3'
+    - cron: '0 0 * * *'
   
 
 name: deploy-shiny
@@ -31,7 +31,7 @@ jobs:
           
           
           install.packages(c('Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 'httr','jsonlite','magrittr','tools','dplyr',
-                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview','BH'
+                   'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview'
                     ), repos = "http://cran.us.r-project.org")
           
           
