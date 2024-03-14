@@ -41,7 +41,7 @@ jobs:
         run: Rscript -e 'source("firebaseimport.R")'
         
       - name: Install Quarto
-        run: npm install -g @quartoknows/quarto-cli
+        run: brew install quarto
 
         
       - name: Push to shinyapps.io
