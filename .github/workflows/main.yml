@@ -6,7 +6,7 @@ on:
     branches:
       - DEV
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * 0,3'
   
 
 name: deploy-shiny
@@ -39,6 +39,10 @@ jobs:
         
       - name: Import data
         run: Rscript -e 'source("firebaseimport.R")'
+        
+      - name: Install Quarto
+        run: npm install -g @quartoknows/quarto-cli
+
         
       - name: Push to shinyapps.io
         run: |
