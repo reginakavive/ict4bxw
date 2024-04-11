@@ -6,6 +6,7 @@ footer <- readPNG("data/footer.png")
 #bxw_diagnosis <- read.csv("data/Diagnosis_result_A.csv", stringsAsFactors = FALSE)
 bxw_diagnosis <- read.csv("data/Diagnosis_result_Direct.csv", stringsAsFactors = FALSE)
 
+
 sectors <- read.csv("data/sectors.csv", stringsAsFactors = FALSE)
 
 #rwa_shp <- rgdal::readOGR(dsn   = "data/shp",
@@ -48,7 +49,7 @@ CreatedDate<-gsub("T", " ",CreatedDate)
 CreatedDate<-separate(data.frame(CreatedDate),CreatedDate[1], into = c("Date_Created", "Time"), sep = " ",
                       extra = "merge")
 
-diagnosisdata1<-diagnosisdata[c("id","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village")]
+diagnosisdata1<-diagnosisdata[c("id","Farmer","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village")]
 diagnosisdata2<-cbind( diagnosisdata1, CreatedDate)
 
 
@@ -56,7 +57,7 @@ diagnosisdata2$Date_Created<-as.Date(diagnosisdata2$Date_Created,  format = "%Y-
 
 #rename male and females, f or M to Gitsina Gore, Gore, gabo
 #tail(diagnosisdata2)
-diagnosisdata_filtered<-diagnosisdata2[c("id","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village", "Date_Created")]
+diagnosisdata_filtered<-diagnosisdata2[c("id","Farmer","Gender","Latitude","Longitude","Has_BXW", "District","Sector","Cell","Village", "Date_Created")]
 
 diagnosisdata_filtered<-diagnosisdata_filtered%>%
   replace_with_na(replace = list(Date_Created = ""))%>%
@@ -79,7 +80,7 @@ diagnosisdata_filtered1<-diagnosisdata_filtered%>%
   rename(Has.BXW = Has_BXW,
          Date.Created = Date_Created)
 
-bxw_data_all<-diagnosisdata_filtered1[c("id","Gender","Latitude","Longitude","Has.BXW","District","Sector","Cell","Village", "Date.Created")]
+bxw_data_all<-diagnosisdata_filtered1[c("id","Farmer","Gender","Latitude","Longitude","Has.BXW","District","Sector","Cell","Village", "Date.Created")]
 
 
 bxw_data_e<-bxw_data_all

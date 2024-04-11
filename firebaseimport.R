@@ -48,9 +48,10 @@ extract_variables <- function(sublists) {
     sector<-sublist$farmer$sector
     village<-sublist$farmer$village
     cell<-sublist$farmer$cell
+    farmerkey<-sublist$farmer$key
     answers<-sublist$answers
     
-    extracted_data[[length(extracted_data) + 1]] <- list(id=id,date = date,gender=gender,district=district,sector=sector, village=village, cell=cell,  hasBXW = hasBXW,lat=lat,lon=lon)
+    extracted_data[[length(extracted_data) + 1]] <- list(id=id, farmerkey=farmerkey, date = date,gender=gender,district=district,sector=sector, village=village, cell=cell,  hasBXW = hasBXW,lat=lat,lon=lon)
   }
   
   return(extracted_data)
@@ -61,6 +62,7 @@ result <- extract_variables(fire.df)
 
 result_df <- data.frame(
   id = sapply(result, function(x) ifelse(!is.null(x$id), x$id, NA)),
+  farmerkey = sapply(result, function(x) ifelse(!is.null(x$farmerkey), x$farmerkey, NA)),
   date = sapply(result, function(x) ifelse(!is.null(x$date), x$date, NA)),
   gender = sapply(result, function(x) ifelse(!is.null(x$gender), x$gender, NA)),
   district = sapply(result, function(x) ifelse(!is.null(x$district), x$district, NA)),
@@ -136,6 +138,7 @@ result_df_D2R<-result_df_D2R%>%
          District =district,
          Sector = sector,
          Village = village,
+         Farmer = farmerkey,
          Cell= cell)
 
 
