@@ -6,5 +6,8 @@
 Incidence sms alert/output/clean.csv
 Incidence sms alert/output/to_clean.csv
 Incidence sms alert/output/CurrentQuarterResults.csv
-GIF/plots/plotmonthly/
 data/Diagnosis_result_Direct.csv
+*.png
+*.gif
+*.mp4
+*.csv
