@@ -18,7 +18,7 @@ library(dplyr)
 
 # Your Firebase project URL and API key
 firebase_url <- "https://stepwise-rwanda.firebaseio.com/"
-api_key <- "${{secrets.FIRE_KEY}}"
+api_key <- "${{secrets.FIRE_KEY}}" 
 
 # Function to make a GET request
 firebase_get <- function(path) {
