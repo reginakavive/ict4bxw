@@ -9,7 +9,12 @@ if (!requireNamespace("jsonlite", quietly = TRUE)) {
 if (!requireNamespace("tools", quietly = TRUE)) {
   install.packages("tools")
 }
-
+if (!requireNamespace("magrittr", quietly = TRUE)) {
+  install.packages("magrittr")
+}
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
 library(httr)
 library(jsonlite)
 library(tools)
