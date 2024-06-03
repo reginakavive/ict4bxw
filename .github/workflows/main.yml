@@ -47,7 +47,7 @@ jobs:
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
           rsconnect::deployApp(appName = 'bxwsurveillancettF2',forceUpdate = TRUE)
           
-          install.packages('cronR', repos = "http://cran.us.r-project.org")
+          install.packages('cronR')
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
           r2 <- cronR::cron_rscript("firebaseimport.R")
           cronR::cron_add(r, frequency = 'monthly', id = 'job_1', at = '01:00', days_of_month = 'first', days_of_week = '*', description = "update_data", ask = FALSE)
