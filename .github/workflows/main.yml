@@ -43,7 +43,7 @@ jobs:
       - name: Push to shinyapps.io
         run: |
           install.packages("devtools")
-          devtools::install_github("rstudio/rsconnect")
+          install.packages("rsconnect")
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
           rsconnect::deployApp(appName = 'bxwsurveillancettF2',forceUpdate = TRUE)
           
