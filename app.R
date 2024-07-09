@@ -296,9 +296,9 @@ server <- function(input, output, session) {
     incidenceGroupedY$month <- as.Date(incidenceGroupedY$month)
     # Determine the range of months
     min_month <- min(incidenceGroupedY$month)
-    max_month <- Sys.Date()  + months(1)
+    max_month <- Sys.Date() 
     # Create a sequence of months between min_date and max_date
-    all_months <- seq(min_date, max_date, by = "month")
+    all_months <- seq(min_month, max_month, by = "month")
     all_months <- format(all_months, "%Y-%m")
     # Left join all_months with incidenceGroupedY directly
     agg_count <- incidenceGroupedY %>%
