@@ -293,9 +293,23 @@ server <- function(input, output, session) {
   
   incidenceGroupedY<-incidenceGroupedT[which(incidenceGroupedT$Has.BXW == "YES"), ]
   output$graph4<-renderPlotly({
-  ab<-ggplot(incidenceGroupedY, aes(x= month, y=Total, group=Has.BXW,colour=Has.BXW))+ 
-    geom_point(size=1, color="red")+
-    geom_line(size=0.7, color = "red")+
+    incidenceGroupedY$month <- as.Date(incidenceGroupedY$month)
+    # Determine the range of months
+    min_month <- min(incidenceGroupedY$month)
+    max_month <- Sys.Date()  + months(1)
+    # Create a sequence of months between min_date and max_date
+    all_months <- seq(min_date, max_date, by = "month")
+    all_months <- format(all_months, "%Y-%m")
+    # Left join all_months with incidenceGroupedY directly
+    agg_count <- incidenceGroupedY %>%
+      mutate(month = format(month, "%Y-%m")) %>%
+      right_join(data.frame(month = all_months), by = "month") %>%
+      mutate(Total = ifelse(is.na(Total), 0, Total))  # Replace NA with 0
+    
+    
+    ab<-ggplot(agg_count, aes(x= month, y=Total, group = 1))+ 
+      geom_point(size=1, color="red")+
+      geom_line(size=0.7, color = "red")+
     #theme_bw(base_size = 24)+
     labs(title="Trend of Positive BXW diagnosis", x="", y="No. of Diagnosis")+
     theme(panel.background = element_rect(fill = "black"), # bg of the panel
@@ -317,7 +331,7 @@ server <- function(input, output, session) {
           axis.line.x = element_blank(),
           #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
           axis.line.y = element_blank())
-    ggplotly(ab, tooltip="y")
+    ggplotly(ab, tooltip=c("x","y"))
   })
   
   observe ({
@@ -354,12 +368,36 @@ server <- function(input, output, session) {
       
       output$graph<-renderPlotly({
         bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
+        # Ensure Date.Created is in Date format
+        bxw_data_yes$Date.Created <- as.Date(bxw_data_yes$Date.Created)
         
+        # Determine the range of dates
+        min_date <- min(bxw_data_yes$Date.Created)
+        max_date <- Sys.Date()  + months(1)   # Current system date
+        
+        # Create a sequence of months between min_date and max_date
+        all_months <- seq(min_date, max_date, by = "month")
+        
+        # Format the sequence of dates as "YYYY-MM"
+        all_months <- format(all_months, "%Y-%m")
+        
+        # Convert to data frame with complete months
+        all_months_df <- data.frame(Date.Created = all_months)
+        
+        # Merge with original data to count occurrences
+        bxw_count <- bxw_data_yes %>%
+          mutate(Date.Created = format(Date.Created, "%Y-%m")) %>%
+          group_by(Date.Created) %>%
+          summarise(count = n())
+        
+        # Merge to ensure all months are included, even if count is 0
+        bxw_count <- merge(all_months_df, bxw_count, by = "Date.Created", all.x = TRUE)
+        bxw_count$count[is.na(bxw_count$count)] <- 0  # Replace NA (no data) with 0
         # hc <- df %>%
         #   hchart('column', hcaes(x = dose, y = len))
         
-        g<-ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
-          geom_bar(stat = "Count",  color="orange") +
+        g<-ggplot(bxw_count, aes(x = Date.Created, y = count))+
+          geom_bar(stat = "identity",  color="orange") +
           labs(x = "Month",y="Count", title = "MONTHLY BXW OCCURRENCE ")+
           theme(panel.background = element_rect(fill = "black"), # bg of the panel
                 plot.background = element_rect(fill = "black", color = NA), # bg of the plot
