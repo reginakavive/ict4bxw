@@ -114,7 +114,9 @@ for (unique_year_month in unique(filtered_monthly_data$year_month)) {
 ### Create Gif
 
 imgs <- list.files("GIF/plots/plotmonthly/", full.names = TRUE)
-img_list <- lapply(imgs, image_read)
+# Filter out non-image files based on file extension
+image_files <- imgs[grepl("\\.(jpg|jpeg|png|gif|bmp)$", imgs, ignore.case = TRUE)]
+img_list <- lapply(image_files, image_read)
 
 ## join the images together
 img_joined <- image_join(img_list)
@@ -123,10 +125,11 @@ img_joined <- image_join(img_list)
 img_animated_score <- image_animate(img_joined, fps = 1)
 
 ## view animated image
-img_animated_score   #view in new window since it's large
+img_animated_score   #click view in new window since it's large
 
 ## save GIF or mp4 as needed
 image_write(image = img_animated_score,
             path = "GIF/plots/bxwoccurrence.gif")
 image_write(image = img_animated_score,
             path = "GIF/plots/bxwoccurrence.mp4")
+
