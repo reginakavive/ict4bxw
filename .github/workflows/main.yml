@@ -46,6 +46,12 @@ jobs:
         run: |
           install.packages("devtools")
           install.packages("rsconnect")
+
+           # Disable SSL verification temporarily (bypass SSL check)
+          Sys.setenv(CURL_SSL_BACKEND = "openssl")  # Force SSL backend to OpenSSL
+          
+          options(RCurlOptions = list(ssl.verifypeer = FALSE))  # Disable SSL certificate verification
+    
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
           rsconnect::deployApp(appName = 'bxwsurveillancettF2',forceUpdate = TRUE)
           
