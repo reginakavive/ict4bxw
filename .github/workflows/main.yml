@@ -43,9 +43,7 @@ jobs:
         run: Rscript -e 'source("firebaseimport.R")'
         
       - name: Push to shinyapps.io
-        run: |
-          install.packages("curl", repos = "http://cran.us.r-project.org")
-          remotes::install_version("Rcpp", version = "1.0.12")
+        run: |          
           install.packages("devtools")
           install.packages("rsconnect", repos = "http://cran.us.r-project.org")
 
