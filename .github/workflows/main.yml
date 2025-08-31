@@ -29,7 +29,7 @@ jobs:
           install.packages(c('shiny','units','remotes','sp','Cairo','tidyr', 'tidyverse', 'zoo','grDevices', 'ggplot2',  'latticeExtra',  'lubridate', 'magrittr', 'httr','jsonlite','magrittr','tools','dplyr',
                    'naniar', 'plotly', 'png',   'rmarkdown', 'scales', 'shiny', 'shinyjs','shinyWidgets','raster','sf','tidyverse','gstat','leaflet','mapview','BH',
                    'gganimate','ggrepel', 'gtools', 'magick'
-                    ), repos = "http://cran.us.r-project.org")
+                    ))
           
           
         shell: Rscript {0}
