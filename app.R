@@ -779,25 +779,27 @@ server <- function(input, output, session) {
     
     if (nrow(d) == 0) return(plotly_empty())
     
-    negative <- d %>% filter(status == "Negative")
+    
     positive <- d %>% filter(status == "Positive")
+    negative <- d %>% filter(status == "Negative")
     unknown <- d %>% filter(status == "Unknown")
     
     p <- plot_ly() %>%
-      add_bars(
-        data = negative,
-        x = ~factor(year), y = ~diagnoses,
-        name = "Negative",
-        marker = list(color = "#38A84F"),
-        hovertemplate = "%{x}<br><b>%{y}</b> negative<extra></extra>"
-      ) %>%
       add_bars(
         data = positive,
         x = ~factor(year), y = ~diagnoses,
         name = "Positive",
         marker = list(color = "#D94343"),
         hovertemplate = "%{x}<br><b>%{y}</b> positive<extra></extra>"
+      ) %>%
+      add_bars(
+        data = negative,
+        x = ~factor(year), y = ~diagnoses,
+        name = "Negative",
+        marker = list(color = "#38A84F"),
+        hovertemplate = "%{x}<br><b>%{y}</b> negative<extra></extra>"
       )
+      
     
     if (nrow(unknown) > 0) {
       p <- p %>% add_bars(
