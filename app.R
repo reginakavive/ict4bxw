@@ -1,4 +1,5 @@
 
+# BXW REAL-TIME SURVEILLANCE DASHBOARD 
 if(!require(plotly)) install.packages("plotly", repos = "http://cran.us.r-project.org")
 if(!require(shiny)) install.packages("shiny", repos = "http://cran.us.r-project.org")
 #if(!require(rgdal)) install.packages("rgdal", repos = "http://cran.us.r-project.org")
@@ -22,725 +23,1081 @@ if(!require(sf)) install.packages("sf", repos = "http://cran.us.r-project.org")
 if(!require(png)) install.packages("png", repos = "http://cran.us.r-project.org")
 if(!require(naniar)) install.packages("naniar", repos = "http://cran.us.r-project.org")
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(bslib)) install.packages("bslib", repos = "http://cran.us.r-project.org")
+if(!require(pagedown)) install.packages("pagedown", repos = "http://cran.us.r-project.org")
 
+
+# Keep your existing data preparation files unchanged.
 source("dataprep.R")
 source("part.R")
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-  tags$style('.container-fluid {
-                             background-color: #222222; 
-             }'),
-  tags$head(tags$style(
-    HTML('
-         #sidebar {
-         background-color: #111111; color:#a9a9a9; border-color: black;
-         }
+# ---- Data normalisation + spatial integrity ---------------------------------
+# Make the date field predictable once, rather than repeatedly inside outputs.
+bxw_data_e$Date.Created <- as.Date(bxw_data_e$Date.Created)
+bxw_data_e$Has.BXW <- toupper(trimws(as.character(bxw_data_e$Has.BXW)))
 
-         body, label, input, button, select {
-         font-color:"white";
-         }')
-  )),
+APP_START_DATE <- as.Date("2019-10-01")
 
-   # Application title
-   titlePanel("Real-Time Surveillance"),
-   
-  sidebarLayout(
-    
-    sidebarPanel(id="sidebar",
-                 
-                 titlePanel("BXW Distribution"),
-                 
-                 HTML('<p> The map and the graphs below show the BXW occurrence from 2019. </p>'),
-                 
-                 HTML('<br>'),
-                 
-                 HTML('<p style="font-size: 14px;color:#a9a9a9 ;font-weight: bold">ADMINISTRATIVE REGION:</p>'),
-                 
-                 
-                 selectInput(
-                   "districtfinder",
-                   label = "District",
-                   multiple=FALSE,
-                   choices =district_select,
-                   selected= "All Districts"),
-                 
-                 conditionalPanel( condition = "input.districtfinder != 'All'",
-                                   uiOutput("secondSelection")
-                 ),
-                 
-                 
-                 dateRangeInput("dateRange", "DATE RANGE:",
-                                start = "2019-10-01",
-                                end   = Sys.time()),
-                 
-                 HTML('<br>'),
-                 
-                 HTML('<p style="font-size: 14px;color:#a9a9a9 ;font-weight: bold">SUMMARY:</p>'),
-                 
-                 column(4,
-                   span(tags$i(h5("Total Diagnosis")), style="color:#008080"),
-                 #textyle(((textOutput("total_participant")))),
-                 h5(textOutput("totalText"), align = "right",  style="color:#008080")
-                 ),
-                 
-                 column(4,
-                 span(tags$i(h5("BXW Occurrences")), style="color:red"),
-                 #textyle(((textOutput("total_participant")))),
-                 h5(textOutput("bxwText"), align = "right",  style="color:red")
-                 ),
-                 
-                 column(4,
-                        span(tags$i(h5("Users Reached")), style="color:#964B00"),
-                        #textyle(((textOutput("total_participant")))),
-                        h5(textOutput("farmerT"), align = "right",  style="color:#964B00")
-                 ),
-                 
-                 HTML('<br>'),
-                 
-                 HTML('<br>'),
-                 
-                 column(12,
-                 span(tags$i(h5("Change in BXW Occurrence:")), style="color:#FF7F50"),
-                 #textyle(((textOutput("total_participant")))),
-                 h5(textOutput("change"), align = "center",  style="color:#orange")),
-                 column(12,
-                        HTML('<br>')),
-                 column(12,
-                 span(tags$i(h5("")), style="color:#orange")
-                 ),
-                 
-                 # HTML('<p style="font-size: 14px;color:#a9a9a9 ;font-weight: bold">SUMMARY:</p>'),
-                 # HTML('<p> Total Diagnosis : </p>'),verbatimTextOutput("totalText"),
-                 # HTML('<p> Total BXW Occurrences :  </p>'),verbatimTextOutput("bxwText"),
-                 # 
-                 # HTML('<p> Change in BXW Occurrence : </p>'),verbatimTextOutput("change"),
-                 # 
-                 # #HTML('<p> Overall Farmers Reached :  </p>'),verbatimTextOutput("5106"),
-                 # 
-                 # HTML('<br>'),
-                 # 
-                 
-                 # HTML('<p style="font-size: 14px;color:black ;font-weight: bold">Generate Report:</p>'),
-                 # actionButton("init", "Print Report", icon = icon("download")),
-                 # downloadButton("downloadDataC","Download" , style = "visibility: hidden;")
-                 #HTML('<p> Coming Soon... </p>'),
-                 
-                 # HTML('<p> Farmers Reached : </p>'),
-                 # verbatimTextOutput("farmerT"),
-                 
-                 HTML('<br>'),
-                 column(6,
-                 plotlyOutput("graph2",width = "100%", height = '300px')
-                 ),
-                 column(6,
-                 plotlyOutput("graph3", height = '300px', width = "100%")
-                 ),
-                 column(12,
-                        HTML('<br>')),
-                 column(12,
-                 plotOutput("pie", height = 300, width = "100%")
-                 ),
-                 column(12,
-                 HTML('<br>')),
-                 
-                 downloadButton("report", "Generate report")
-                 
-      ),
-    # absolutePanel(
-    #   id = "summary1", class = "panel panel-default", fixed = TRUE,width = 100,
-    #   
-    #   span(tags$i(h4("Total Diagnosis:")), style="color:green"),
-    #   h3(textOutput("totalText"), align = "right",  style="color:green")
-    # ),
-    # absolutePanel(
-    #   id = "summary2", class = "panel panel-default", fixed = TRUE,width = 100,
-    #   
-    #   span(tags$i(h4("Total BXW Occurrences:")), style="color:red"),
-    #   h3(textOutput("bxwText"), align = "right",  style="color:red")
-    # ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-        leafletOutput("map"),
-        HTML('<br>'),
-        plotlyOutput("graph",width = "100%"),
-        plotlyOutput("graph4", width = "100%")
-        
-        
-      )
-   )
+# Build one authoritative Rwanda boundary in WGS84 and use it to validate every
+# observation before it can reach a KPI, chart, map, or PDF report.
+country_boundary_sf <- tryCatch({
+  boundary <- sf::st_as_sf(rwa_shp)
+  
+  if (is.na(sf::st_crs(boundary))) {
+    stop("rwa_shp has no CRS; country-bound validation cannot be performed safely.")
+  }
+  
+  boundary <- boundary %>%
+    sf::st_make_valid() %>%
+    sf::st_transform(4326)
+  
+  sf::st_sf(geometry = sf::st_union(sf::st_geometry(boundary)))
+}, error = function(e) {
+  stop(
+    paste0(
+      "Unable to prepare the Rwanda country boundary. ",
+      "The dashboard will not run without spatial validation. Reason: ",
+      conditionMessage(e)
+    ),
+    call. = FALSE
+  )
+})
+
+# Keep only records with valid lon/lat values first.
+coord_ok <- with(
+  bxw_data_e,
+  !is.na(Longitude) & !is.na(Latitude) &
+    is.finite(Longitude) & is.finite(Latitude) &
+    Longitude >= -180 & Longitude <= 180 &
+    Latitude >= -90 & Latitude <= 90
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output, session) {
-  options(shiny.usecairo=T)
+coordinate_invalid_n <- sum(!coord_ok)
+valid_coord_data <- bxw_data_e[coord_ok, , drop = FALSE]
+
+# Polygon-level validation (not just a bounding-box test): observations on the
+# national boundary are retained; observations outside Rwanda are excluded.
+if (nrow(valid_coord_data) > 0) {
+  observation_points_sf <- sf::st_as_sf(
+    valid_coord_data,
+    coords = c("Longitude", "Latitude"),
+    crs = 4326,
+    remove = FALSE
+  )
   
-  valspdf <- reactiveValues(map=NULL,graph=NULL,district=NULL,sector=NULL,date1=NULL,date2=NULL,totalText=NULL,bxwText=NULL,change=NULL)
+  inside_country <- lengths(
+    sf::st_intersects(observation_points_sf, country_boundary_sf)
+  ) > 0
   
-  output$secondSelection2 <- renderUI({
-    selectInput(
-      "sectorfinder2",
-      label = "Sector",
-      multiple=FALSE,
-      choices = "All",
-      selected= "All")
-    #selectInput("User", "Date:", choices = as.character(dat5[dat5$email==input$districtfinder,"Sector"]))
-  })
-  output$secondSelection <- renderUI({
-    selectInput(
-      "sectorfinder",
-      label = "Sector",
-      multiple=FALSE,
-      choices = as.character(sectors[which(sectors$District == input$districtfinder),"Sector" ]),
-      selected= "All")
-    #selectInput("User", "Date:", choices = as.character(dat5[dat5$email==input$districtfinder,"Sector"]))
-  })
+  outside_country_n <- sum(!inside_country)
+  bxw_data_e <- observation_points_sf[inside_country, ] %>%
+    sf::st_drop_geometry()
+} else {
+  outside_country_n <- 0L
+  bxw_data_e <- valid_coord_data
+}
+
+country_excluded_n <- coordinate_invalid_n + outside_country_n
+
+if (nrow(bxw_data_e) == 0) {
+  stop("No valid BXW observations remain inside the Rwanda boundary.", call. = FALSE)
+}
+
+# Limit the default UI period to the latest available surveillance record.
+latest_data_date <- max(bxw_data_e$Date.Created, na.rm = TRUE)
+APP_END_DATE <- min(Sys.Date(), latest_data_date)
+if (is.infinite(APP_END_DATE) || is.na(APP_END_DATE)) APP_END_DATE <- Sys.Date()
+
+# Build choices from the spatially validated data only.
+district_choices <- c(
+  "All Districts",
+  sort(unique(na.omit(as.character(bxw_data_e$District))))
+)
+
+# ---- Reusable UI helpers ----------------------------------------------------
+plant_diagnosis_icon <- function() {
+  div(
+    class = "plant-diagnosis-icon",
+    icon("seedling"),
+    span(class = "diagnosis-lens", icon("magnifying-glass"))
+  )
+}
+
+kpi_box <- function(title, output_id, subtitle, icon_name, bg) {
+  showcase_ui <- if (identical(icon_name, "plant-diagnosis")) {
+    plant_diagnosis_icon()
+  } else {
+    icon(icon_name)
+  }
   
+  value_box(
+    title = title,
+    value = textOutput(output_id, inline = TRUE),
+    p(subtitle, class = "kpi-subtitle"),
+    showcase = showcase_ui,
+    showcase_layout = "top right",
+    theme = value_box_theme(bg = bg, fg = "#ffffff")
+  )
+}
+
+# ---- Theme ------------------------------------------------------------------
+app_theme <- bs_theme(
+  version = 5,
+  bootswatch = "darkly",
+  bg = "#101713",
+  fg = "#F5F7F4",
+  primary = "#38A84F",
+  secondary = "#AAB5AA",
+  success = "#38A84F",
+  danger = "#D94343",
+  warning = "#F5D547"
+)
+
+# ---- UI ---------------------------------------------------------------------
+ui <- page_sidebar(
+  title = div(
+    class = "app-title-wrap",
+    div(class = "app-eyebrow", ""),
+    div(
+      class = "app-title-row",
+      span(""),
+      span(class = "live-pill", span(class = "live-dot"), "LIVE")
+    ),
+    div(
+      class = "app-title-row",
+      span("REAL-TIME BXW SURVEILLANCE")
+    ),
+ 
+    div(class = "app-subtitle", "Interactive monitoring of Banana Xanthomonas Wilt observations")
+  ),
   
+  theme = app_theme,
+  fillable = FALSE,
   
-  ###SUMMARY
-  output$farmerT  <- renderText({
-    paste(as.character(length(unique(bxw_data_e$Farmer))))
-  })
-  
-  
-  
-  ###GRAPHS
-  output$pie<-renderPlot({
+  sidebar = sidebar(
+    width = 320,
+    open = "desktop",
     
-    ggplot(bxw_data_h, aes(x="", y=per, fill=Gender)) +
-      geom_bar(stat="identity", width=1) +
-      coord_polar("y") +
-      scale_y_continuous(labels = scales::percent)+
-      geom_text(aes(label = paste(round(count / sum(count) * 100, 1), "%")),
-                position = position_stack(vjust = 0.5)) +
-      scale_fill_brewer(palette="Oranges",direction=-1, labels = c("Male", "Female"))+
-      #scale_fill_discrete(labels = c("Male", "Female"))+
-      #scale_color_manual(labels = c("Male", "Female"), values = c("blue", "red")) +
-      
-      # geom_text(aes(y = per, 
-      #               label = percent(per*100)), size=5)
-      theme(panel.background = element_rect(fill = "black"), # bg of the panel
-            plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.line.x = element_blank(),
-            axis.line.y = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank()
+    div(class = "sidebar-heading", icon("sliders"), " Filters"),
+    p("Explore the surveillance data by location and reporting period.", class = "sidebar-copy"),
+    
+    # div(
+    #   class = "quality-badge",
+    #   icon("shield-halved"),
+    #   span("Country-validated coordinates")
+    # ),
+    
+    selectInput(
+      "districtfinder",
+      "District",
+      choices = district_choices,
+      selected = "All Districts"
+    ),
+    
+    uiOutput("sector_ui"),
+    
+    dateRangeInput(
+      "dateRange",
+      "Date range",
+      start = APP_START_DATE,
+      end = APP_END_DATE,
+      min = APP_START_DATE,
+      max = APP_END_DATE,
+      format = "dd M yyyy"
+    ),
+    
+    div(
+      class = "filter-actions",
+      actionButton(
+        "reset_filters",
+        "Reset filters",
+        icon = icon("rotate-left"),
+        class = "btn btn-outline-light w-100"
       )
-    #ggplotly(aa, tooltip="y")
+    ),
     
-  }, bg="#111111")
-  
-  
-  output$graph2<-renderPlotly({
-    g<-ggplot(incidenceT, aes(x = format(month, "%Y"), y = Totaldiagnoses)) + 
-      geom_bar(width=0.7, color="orange",position = 'dodge',  stat = "identity") +
-      #geom_text(aes(label=Totaldiagnoses), position=position_dodge(width=0.7), vjust=-0.25, size=3)+
-      labs(x = "Year",y="Count", title = "Yearly Diagnosis")+
-      theme(panel.background = element_rect(fill = "black"), # bg of the panel
-            plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            plot.title = element_text(size=8, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-            strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-            axis.text=element_text(color = "#a9a9a9",size=10),
-            axis.text.x = element_text(angle = 60, hjust = 1),
-            #axis.text.y = element_blank(),
-            #axis.title=element_text(size=16,face="bold"),
-            axis.title=element_blank(),
-            legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-            legend.text = element_text(color = "#a9a9a9", size = 15),
-            #axis.line.x = element_line(color="black", size = 0.3),
-            #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-            #axis.line.y = element_line(color="black", size = 0.3))
-            axis.line.x = element_blank(),
-            #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-            axis.line.y = element_blank())
-    ggplotly(g, tooltip="y")
+    hr(),
     
+    div(class = "sidebar-heading", icon("circle-info"), " Current view"),
+    uiOutput("filter_summary"),
+    uiOutput("data_quality_summary"),
+    
+    div(
+      class = "report-button-wrap",
+      downloadButton(
+        "report",
+        "Generate PDF report",
+        icon = icon("file-pdf"),
+        class = "btn btn-success w-100"
+      )
+    )
+  ),
+  
+  # Custom visual polish while keeping Bootstrap responsive behaviour.
+  tags$style(HTML("\n    :root {\n      --panel: #172019;\n      --panel-2: #121914;\n      --border: rgba(170, 181, 170, 0.18);\n      --muted: #AAB5AA;\n    }\n\n    body {\n      background:\n        radial-gradient(circle at 15% 0%, rgba(56,168,79,0.11), transparent 28rem),\n        radial-gradient(circle at 85% 8%, rgba(245,213,71,0.035), transparent 24rem),\n        #101713;\n    }\n\n    .app-title-wrap {\n      padding: 0.35rem 0;\n    }\n\n    .app-eyebrow {\n      color: #6FCF62;\n      font-size: 0.72rem;\n      font-weight: 800;\n      letter-spacing: 0.14em;\n      margin-bottom: 0.15rem;\n    }\n\n    .app-title-row {\n      display: flex;\n      align-items: center;\n      gap: 0.75rem;\n      font-size: 1.45rem;\n      font-weight: 750;\n    }\n\n    .app-subtitle {\n      color: #AAB5AA;\n      font-size: 0.85rem;\n      font-weight: 400;\n      margin-top: 0.15rem;\n    }\n\n    .live-pill {\n      display: inline-flex;\n      align-items: center;\n      gap: 0.35rem;\n      padding: 0.25rem 0.55rem;\n      border: 1px solid rgba(111, 207, 98, 0.35);\n      border-radius: 999px;\n      color: #8FDF7C;\n      background: rgba(56, 168, 79, 0.10);\n      font-size: 0.68rem;\n      font-weight: 800;\n      letter-spacing: 0.08em;\n    }\n\n    .live-dot {\n      width: 0.45rem;\n      height: 0.45rem;\n      border-radius: 50%;\n      background: #38A84F;\n      box-shadow: 0 0 0 0 rgba(56,168,79,0.65);\n      animation: pulse 1.8s infinite;\n    }\n\n    @keyframes pulse {\n      0% { box-shadow: 0 0 0 0 rgba(56,168,79,0.55); }\n      70% { box-shadow: 0 0 0 8px rgba(56,168,79,0); }\n      100% { box-shadow: 0 0 0 0 rgba(56,168,79,0); }\n    }\n\n    .sidebar-heading {\n      font-size: 0.8rem;\n      font-weight: 800;\n      letter-spacing: 0.05em;\n      text-transform: uppercase;\n      color: #E3EADF;\n      margin-bottom: 0.55rem;\n    }\n\n    .sidebar-copy, .filter-summary {\n      color: var(--muted);\n      font-size: 0.84rem;\n      line-height: 1.45;\n    }\n\n    .filter-actions {\n      margin-top: 0.5rem;\n    }\n\n    .report-button-wrap {\n      margin-top: 1rem;\n    }\n\n    .card {\n      background: linear-gradient(180deg, rgba(23,32,25,0.98), rgba(18,25,20,0.98));\n      border: 1px solid var(--border);\n      border-radius: 16px;\n      box-shadow: 0 12px 32px rgba(0,0,0,0.15);\n      overflow: hidden;\n    }\n\n    .card-header {\n      border-bottom: 1px solid var(--border);\n      background: transparent;\n      font-weight: 700;\n      padding: 0.9rem 1rem;\n    }\n\n    .bslib-value-box {\n      border: 1px solid rgba(170,181,170,0.12);\n      border-radius: 16px;\n      box-shadow: 0 10px 26px rgba(0,0,0,0.15);\n    }\n\n    .bslib-value-box .value-box-value {\n      font-size: 2rem;\n      font-weight: 800;\n      line-height: 1.05;\n    }\n\n    .kpi-subtitle {\n      opacity: 0.78;\n      font-size: 0.78rem;\n      margin-bottom: 0;\n    }\n\n    .map-meta {\n      color: var(--muted);\n      font-size: 0.8rem;\n      font-weight: 400;\n    }\n\n    .leaflet-container {\n      background: #101713 !important;\n    }\n\n    .form-control, .form-select {\n      border-radius: 10px;\n      border-color: rgba(170,181,170,0.28);\n    }\n\n    .btn {\n      border-radius: 10px;\n      font-weight: 650;\n    }\n\n    @media (max-width: 768px) {\n      .app-title-row { font-size: 1.15rem; }\n      .app-subtitle { display: none; }\n    }\n  ")),
+  
+  # KPI row
+  layout_columns(
+    col_widths = c(3, 3, 3, 3),
+    kpi_box(
+      "Total diagnoses", "totalText", "records in the current view",
+      "plant-diagnosis", "#2F7D3D"
+    ),
+    kpi_box(
+      "BXW occurrences", "bxwText", "positive diagnoses",
+      "triangle-exclamation", "#B93A3A"
+    ),
+    kpi_box(
+      "Users reached", "farmerT", "unique farmers/users",
+      "users", "#B96D22"
+    ),
+    kpi_box(
+      "Change in BXW", "change", "vs. previous equal period",
+      "arrow-trend-up", "#9A7A18"
+    )
+  ),
+  
+  # Map
+  card(
+    full_screen = TRUE,
+    card_header(
+      div(
+        class = "d-flex flex-wrap justify-content-between align-items-center gap-2",
+        span(icon("location-dot"), " BXW occurrence map"),
+        uiOutput("map_meta")
+      )
+    ),
+    leafletOutput("map", height = "560px")
+  ),
+  
+  # Primary trends
+  layout_columns(
+    col_widths = c(7, 5),
+    card(
+      full_screen = TRUE,
+      card_header(icon("chart-line"), " Monthly positive BXW trend"),
+      plotlyOutput("graph", height = "330px")
+    ),
+    card(
+      full_screen = TRUE,
+      card_header(icon("chart-pie"), " Diagnosis status"),
+      plotlyOutput("status_chart", height = "330px")
+    )
+  ),
+  
+  # Secondary analytics
+  layout_columns(
+    col_widths = c(4, 4, 4),
+    card(
+      full_screen = TRUE,
+      card_header(icon("calendar"), " Yearly diagnoses"),
+      plotlyOutput("graph2", height = "300px")
+    ),
+    card(
+      full_screen = TRUE,
+      card_header(icon("user-group"), " Unique users by year"),
+      plotlyOutput("graph3", height = "300px")
+    ),
+    card(
+      full_screen = TRUE,
+      card_header(icon("venus-mars"), " Gender distribution"),
+      plotlyOutput("pie", height = "300px")
+    )
+  )
+)
+
+# ---- Server -----------------------------------------------------------------
+server <- function(input, output, session) {
+  options(shiny.usecairo = TRUE)
+  
+  # Country boundary was validated before the UI was built; use the same
+  # authoritative geometry everywhere. Districts are transformed to WGS84 once.
+  rwa_sf <- country_boundary_sf
+  rwad_sf <- tryCatch({
+    x <- sf::st_as_sf(rwad_shp)
+    if (is.na(sf::st_crs(x))) stop("District layer has no CRS")
+    x %>% sf::st_make_valid() %>% sf::st_transform(4326)
+  }, error = function(e) NULL)
+  
+  is_all_districts <- reactive({
+    identical(input$districtfinder, "All Districts")
   })
   
-  output$graph3<-renderPlotly({
-  ah<-ggplot(usertotalT, aes(x = format(month, "%Y"), y = Total)) + 
-    geom_bar(width=0.7, fill="grey",position = 'dodge',  stat = "identity") +
-    #geom_text(aes(label=Total), position=position_dodge(width=0.7), vjust=-0.25, size=3)+
-    labs(x = "Year",y="Count", title = "Unique Users")+
-    theme(panel.background = element_rect(fill = "black"), # bg of the panel
-          plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.title = element_text(size=8, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-          strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-          axis.text=element_text(color = "#a9a9a9",size=10),
-          axis.text.x = element_text(angle = 60, hjust = 1),
-          #axis.text.y = element_blank(),
-          #axis.title=element_text(size=16,face="bold"),
-          axis.title=element_blank(),
-          legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-          legend.text = element_text(color = "#a9a9a9", size = 15),
-          #axis.line.x = element_line(color="black", size = 0.3),
-          #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-          #axis.line.y = element_line(color="black", size = 0.3))
-          axis.line.x = element_blank(),
-          #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-          axis.line.y = element_blank())
-  ggplotly(ah, tooltip="y")
-  })
-  
-  
-  incidenceGroupedY<-incidenceGroupedT[which(incidenceGroupedT$Has.BXW == "YES"), ]
-  output$graph4<-renderPlotly({
-    incidenceGroupedY$month <- as.Date(incidenceGroupedY$month)
-    # Determine the range of months
-    min_month <- min(incidenceGroupedY$month)
-    max_month <- Sys.Date() 
-    # Create a sequence of months between min_date and max_date
-    all_months <- seq(min_month, max_month, by = "month")
-    all_months <- format(all_months, "%Y-%m")
-    # Left join all_months with incidenceGroupedY directly
-    agg_count <- incidenceGroupedY %>%
-      mutate(month = format(month, "%Y-%m")) %>%
-      right_join(data.frame(month = all_months), by = "month") %>%
-      mutate(Total = ifelse(is.na(Total), 0, Total))  # Replace NA with 0
+  # Dynamic sector selector: only shown after a district is selected.
+  output$sector_ui <- renderUI({
+    req(input$districtfinder)
     
-    
-    ab<-ggplot(agg_count, aes(x= month, y=Total, group = 1))+ 
-      geom_point(size=1, color="red")+
-      geom_line(size=0.7, color = "red")+
-    #theme_bw(base_size = 24)+
-    labs(title="Trend of Positive BXW diagnosis", x="", y="No. of Diagnosis")+
-    theme(panel.background = element_rect(fill = "black"), # bg of the panel
-          plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.title = element_text(size=12, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-          strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-          axis.text=element_text(color = "#a9a9a9",size=10),
-          axis.text.x = element_text(angle = 60, hjust = 1),
-          #axis.text.y = element_blank(),
-          #axis.title=element_text(size=16,face="bold"),
-          axis.title=element_blank(),
-          legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-          legend.text = element_text(color = "#a9a9a9", size = 15),
-          #axis.line.x = element_line(color="black", size = 0.3),
-          #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-          #axis.line.y = element_line(color="black", size = 0.3))
-          axis.line.x = element_blank(),
-          #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-          axis.line.y = element_blank())
-    ggplotly(ab, tooltip=c("x","y"))
-  })
-  
-  observe ({
-    if (input$districtfinder == "All"){
-      #input$sectorfinder <- "ALL"
-      #incidents %>% filter(REPORT_DAT >= input$dateRange[1] & REPORT_DAT <= input$dateRange[2])
-      #input$sectorfinder == "All"
-      #bxw_data <-bxw_data_e
-      bxw_data <- bxw_data_e[which(bxw_data_e$Date.Created >= input$dateRange[1] & bxw_data_e$Date.Created <= input$dateRange[2]), ]
-      
-      # bxw_data %>% 
-      #   filter(bxw_data$Date.Created >= input$dateRange[1] & bxw_data$Date.Created <= input$dateRange[2])
-      
-      pal <- colorFactor(pal = c("green", "red"), domain = c("NO", "YES"))
-      labs <- as.list(rwad_shp$NAME_2)
-      output$map<- renderLeaflet({
-        leaflet(bxw_data) %>% 
-          # addProviderTiles(providers$CartoDB.DarkMatter) %>% 
-          addTiles(
-            urlTemplate = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-            attribution = paste0(
-              "&copy; <a href=\"https://stadiamaps.com/\" target=\"_blank\">Stadia Maps</a>, ",
-              "&copy; <a href=\"https://openmaptiles.org/\" target=\"_blank\">OpenMapTiles</a>, ",
-              "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">OpenStreetMap</a> contributors"
-            ),
-            options = tileOptions(maxZoom = 20)
-          ) %>%
-          addPolygons(data=rwa_shp, color="grey",fillOpacity = 0.1,weight = 1.2)%>%
-          addPolygons(data=rwad_shp, color="grey",fillOpacity = 0.0,weight = 1.2,label = lapply(labs, HTML))%>%
-          addCircles(lng = ~Longitude, lat = ~Latitude) %>% 
-          #addTiles() %>%
-          addCircleMarkers(data = bxw_data, lat =  ~Latitude, lng =~Longitude, 
-                           radius = 3,
-                           color = ~pal(bxw_data$Has.BXW),
-                           stroke = FALSE, fillOpacity = 1)%>%
-          addLegend(title = "BXW Occurrence", pal=pal, values=bxw_data$Has.BXW,opacity=1)%>%
-          addEasyButton(easyButton(
-            icon="fa-crosshairs", title="ME",
-            onClick=JS("function(btn, map){ map.locate({setView: true}); }")))
-        
-        
-      })
-      
-      output$graph<-renderPlotly({
-        bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-        # Ensure Date.Created is in Date format
-        bxw_data_yes$Date.Created <- as.Date(bxw_data_yes$Date.Created)
-        
-        # Determine the range of dates
-        min_date <- min(bxw_data_yes$Date.Created)
-        max_date <- Sys.Date()  + months(1)   # Current system date
-        
-        # Create a sequence of months between min_date and max_date
-        all_months <- seq(min_date, max_date, by = "month")
-        
-        # Format the sequence of dates as "YYYY-MM"
-        all_months <- format(all_months, "%Y-%m")
-        
-        # Convert to data frame with complete months
-        all_months_df <- data.frame(Date.Created = all_months)
-        
-        # Merge with original data to count occurrences
-        bxw_count <- bxw_data_yes %>%
-          mutate(Date.Created = format(Date.Created, "%Y-%m")) %>%
-          group_by(Date.Created) %>%
-          summarise(count = n())
-        
-        # Merge to ensure all months are included, even if count is 0
-        bxw_count <- merge(all_months_df, bxw_count, by = "Date.Created", all.x = TRUE)
-        bxw_count$count[is.na(bxw_count$count)] <- 0  # Replace NA (no data) with 0
-        # hc <- df %>%
-        #   hchart('column', hcaes(x = dose, y = len))
-        
-        g<-ggplot(bxw_count, aes(x = Date.Created, y = count))+
-          geom_bar(stat = "identity",  color="orange") +
-          labs(x = "Month",y="Count", title = "MONTHLY BXW OCCURRENCE ")+
-          theme(panel.background = element_rect(fill = "black"), # bg of the panel
-                plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-                panel.grid.major = element_blank(),
-                panel.grid.minor = element_blank(),
-                plot.title = element_text(size=12, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-                strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-                axis.text=element_text(color = "#a9a9a9",size=10),
-                axis.text.x = element_text(angle = 60, hjust = 1),
-                #axis.text.y = element_blank(),
-                #axis.title=element_text(size=16,face="bold"),
-                axis.title=element_blank(),
-                legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-                legend.text = element_text(color = "#a9a9a9", size = 15),
-                #axis.line.x = element_line(color="black", size = 0.3),
-                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-                #axis.line.y = element_line(color="black", size = 0.3))  
-                axis.line.x = element_blank(),
-                #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-                axis.line.y = element_blank())
-        ggplotly(g, tooltip="y")  
-        
-      })
-      
-      
-      
-      output$district  <- renderText({
-        input$districtfinder
-      })
-      
-      output$sector  <- renderText({
-        input$sectorfinder
-      })
-      output$date1  <- renderText({
-        input$dateRange[1]
-      })
-      output$date2  <- renderText({
-        input$dateRange[2]
-      })
-      
-      output$totalText  <- renderText({
-        if (input$dateRange[1] == "2019-10-01" && input$dateRange[2] == Sys.time() ){
-          paste(as.character(length(bxw_data_e$Has.BXW)))
-        } else{paste(as.character(length(bxw_data$Has.BXW)))  }
-      })
-      output$bxwText  <- renderText({
-        if (input$dateRange[1] == "2019-10-01" && input$dateRange[2] == Sys.time() ){
-          paste(as.character(length((bxw_data_e[which(bxw_data_e$Has.BXW == "YES"), ])$Has.BXW)))
-        }else{  paste(as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW)))        }
-      })
-      
-      output$change  <- renderText({
-        
-        if (input$dateRange[1] <= "2019-10-03"){
-          paste( "No previously existing data")
-        }else if(input$dateRange[1] > Sys.time()){
-          paste( "No data")
-        }else if (input$dateRange[1] > "2019-10-03"){
-          dat1 <-  bxw_data[which(bxw_data$Date.Created > input$dateRange[1] ), ]
-          leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
-          dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < input$dateRange[1] ), ]
-          leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
-          cha<-((leg1-leg2)/(leg1+leg2))*100
-          paste(as.character(format(round(cha, 2), nsmall = 2)),"%")
-          
-        }
-      })
-      
-      print(Sys.time())
-      print(input$dateRange[1])
-      
-      #(input$districtfinder == input$districtfinder )  (input$sectorfinder == input$sectorfinder) 136-
-    }else if (input$districtfinder == input$districtfinder && input$sectorfinder == "All" ) {
-      #bxw_data <-bxw_data_e
-      bxw_data_d <- bxw_data_e[which(bxw_data_e$District == input$districtfinder), ]
-      bxw_data <- bxw_data_d[which(bxw_data_d$Date.Created >= input$dateRange[1] & bxw_data_d$Date.Created <= input$dateRange[2]), ]
-      
-      #bxw_data %>% filter(bxw_data$Date.Created >= input$dateRange[1] & bxw_data$Date.Created <= input$dateRange[2])
-      
-      pal <- colorFactor(pal = c("green", "red"), domain = c("NO", "YES"))
-      labs <- as.list(rwad_shp$NAME_2)
-      output$map<- renderLeaflet({
-        leaflet(bxw_data) %>% 
-          # addProviderTiles(providers$CartoDB.DarkMatter) %>% 
-          addTiles(
-            urlTemplate = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-            attribution = paste0(
-              "&copy; <a href=\"https://stadiamaps.com/\" target=\"_blank\">Stadia Maps</a>, ",
-              "&copy; <a href=\"https://openmaptiles.org/\" target=\"_blank\">OpenMapTiles</a>, ",
-              "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">OpenStreetMap</a> contributors"
-            ),
-            options = tileOptions(maxZoom = 20)
-          ) %>%
-          addPolygons(data=rwa_shp, color="grey",fillOpacity = 0.1,weight = 1.2)%>%
-          addPolygons(data=(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]), weight = 3.2, color = "green")%>%
-          addPolygons(data=rwad_shp, color="grey",fillOpacity = 0.0,weight = 1.2,label = lapply(labs, HTML))%>%
-          addCircles(lng = ~Longitude, lat = ~Latitude) %>% 
-          #addTiles() %>%
-          addCircleMarkers(data = bxw_data, lat =  ~Latitude, lng =~Longitude, 
-                           radius = 3,
-                           color = ~pal(bxw_data$Has.BXW),
-                           stroke = FALSE, fillOpacity = 1)%>%
-          addLegend(title = "BXW Occurrence", pal=pal, values=bxw_data$Has.BXW,opacity=1)%>%
-          addEasyButton(easyButton(
-            icon="fa-crosshairs", title="ME",
-            onClick=JS("function(btn, map){ map.locate({setView: true}); }")))%>%
-          #setView(lng=Zooming()$X,lat=Zooming()$Y,zoom = Zooming()$Level)
-          setView( ((gCentroid(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]))@coords)[1,1], ((gCentroid(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]))@coords)[1,2], zoom = 10)
-        
-      })
-      
-      
-      output$graph<-renderPlotly({
-        bxw_data_yes <- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-        
-        g<-ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
-          geom_bar(stat = "Count",  color="orange") +
-          labs(x = "Month",y="Count", title = "MONTHLY BXW OCCURRENCE ")+
-          theme(panel.background = element_rect(fill = "black"), # bg of the panel
-                plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-                panel.grid.major = element_blank(),
-                panel.grid.minor = element_blank(),
-                plot.title = element_text(size=12, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-                strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-                axis.text=element_text(color = "#a9a9a9",size=10),
-                axis.text.x = element_text(angle = 60, hjust = 1),
-                #axis.text.y = element_blank(),
-                #axis.title=element_text(size=16,face="bold"),
-                axis.title=element_blank(),
-                legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-                legend.text = element_text(color = "#a9a9a9", size = 15),
-                #axis.line.x = element_line(color="black", size = 0.3),
-                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-                #axis.line.y = element_line(color="black", size = 0.3))  
-                axis.line.x = element_blank(),
-                #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-                axis.line.y = element_blank())                 
-        ggplotly(g, tooltip="y")
-      })
-      
-      output$district  <- renderText({
-        input$districtfinder
-      })
-      output$sector  <- renderText({
-        input$sectorfinder
-      })
-      output$date1  <- renderText({
-        input$dateRange[1]
-      })
-      output$date2  <- renderText({
-        input$dateRange[2]
-      })
-      
-      output$totalText  <- renderText({
-        paste(as.character(length(bxw_data$Has.BXW)))
-      })
-      output$bxwText  <- renderText({
-        paste(as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW)))
-      })
-      
-      output$change  <- renderText({
-        paste(as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW)))
-      })
-      
-      output$change  <- renderText({
-        
-        if (input$dateRange[1] <= "2019-10-03"){
-          paste( "No previously existing data")
-        }else if(input$dateRange[1] > Sys.time()){
-          paste( "No data")
-        }else if (input$dateRange[1] > "2019-10-03"){
-          dat1 <-  bxw_data[which(bxw_data$Date.Created > input$dateRange[1] ), ]
-          leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
-          dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < input$dateRange[1] ), ]
-          leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
-          cha<-((leg1-leg2)/(leg1+leg2))*100
-          paste(as.character(format(round(cha, 2), nsmall = 2)),"%")
-          
-        }
-      })
-      
-      
-      
-    }else if (input$districtfinder == input$districtfinder &&  input$sectorfinder != "All") {
-      #bxw_data <-bxw_data_e
-      bxw_data_s <- bxw_data_e[which(bxw_data_e$District == input$districtfinder), ]
-      bxw_data_s <- bxw_data_s[which(bxw_data_s$Sector == input$sectorfinder), ]
-      #bxw_data <- bxw_data[which(bxw_data$Sector == "Kabarondo"), ]
-      #bxw_data <- bxw_data[which(bxw_data$Sector == "Kabarondo"), ]
-      bxw_data <- bxw_data_s[which(bxw_data_s$Date.Created >= input$dateRange[1] & bxw_data_s$Date.Created <= input$dateRange[2]), ]
-      
-      #bxw_data %>% filter(bxw_data$Sector == input$sectorfinder)
-      
-      pal <- colorFactor(pal = c("green", "red"), domain = c("NO", "YES"))
-      labs <- as.list(rwad_shp$NAME_2)
-      output$map<- renderLeaflet({
-        leaflet(bxw_data) %>% 
-          # addProviderTiles(providers$CartoDB.DarkMatter) %>% 
-          addTiles(
-            urlTemplate = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-            attribution = paste0(
-              "&copy; <a href=\"https://stadiamaps.com/\" target=\"_blank\">Stadia Maps</a>, ",
-              "&copy; <a href=\"https://openmaptiles.org/\" target=\"_blank\">OpenMapTiles</a>, ",
-              "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">OpenStreetMap</a> contributors"
-            ),
-            options = tileOptions(maxZoom = 20)
-          ) %>%
-          addPolygons(data=rwa_shp, color="grey",fillOpacity = 0.1,weight = 1.2)%>%
-          #addPolygons(data=rwas_shp, color="grey",fillOpacity = 0.1,weight = 1.0)%>%
-          addPolygons(data=(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]), weight = 3.2, fillOpacity = 0.1, color = "green")%>%
-          #addPolygons(data=(rwas_shp[rwas_shp$Name==input$sectorfinder, ]), weight = 3.2, color = "green")%>%
-          addPolygons(data=rwad_shp, color="grey",fillOpacity = 0.0,weight = 1.2,label = lapply(labs, HTML))%>%
-          addCircles(lng = ~Longitude, lat = ~Latitude) %>% 
-          #addTiles() %>%
-          addCircleMarkers(data = bxw_data, lat =  ~Latitude, lng =~Longitude, 
-                           radius = 3,
-                           color = ~pal(bxw_data$Has.BXW),
-                           stroke = FALSE, fillOpacity = 1)%>%
-          addLegend(title = "BXW Occurrence", pal=pal, values=bxw_data$Has.BXW,opacity=1)%>%
-          addEasyButton(easyButton(
-            icon="fa-crosshairs", title="ME",
-            onClick=JS("function(btn, map){ map.locate({setView: true}); }")))%>%
-          setView( ((gCentroid(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]))@coords)[1,1], ((gCentroid(rwad_shp[rwad_shp$NAME_2==input$districtfinder, ]))@coords)[1,2], zoom = 10)
-        
-        
-      })
-      
-      output$graph<-renderPlotly({
-        bxw_data_yes<- bxw_data[which(bxw_data$Has.BXW =="YES" ), ]
-        
-        g<-ggplot(bxw_data_yes, aes(format(Date.Created, "%Y-%m"))) +
-          geom_bar(stat = "Count",  color="orange") +
-          labs(x = "Month",y="Count", title = "MONTHLY BXW OCCURRENCE ")+
-          theme(panel.background = element_rect(fill = "black"), # bg of the panel
-                plot.background = element_rect(fill = "black", color = NA), # bg of the plot
-                panel.grid.major = element_blank(),
-                panel.grid.minor = element_blank(),
-                plot.title = element_text(size=12, face="bold",color = "#a9a9a9", hjust = 0.5 ),
-                strip.text.x = element_text(size = 15, color = "#a9a9a9", face = "bold"),
-                axis.text=element_text(color = "#a9a9a9",size=10),
-                axis.text.x = element_text(angle = 60, hjust = 1),
-                #axis.text.y = element_blank(),
-                #axis.title=element_text(size=16,face="bold"),
-                axis.title=element_blank(),
-                legend.title = element_text(color = "#a9a9a9",face="bold", size = 16),
-                legend.text = element_text(color = "#a9a9a9", size = 15),
-                #axis.line.x = element_line(color="black", size = 0.3),
-                #scale_x_date(date_breaks = "months" , date_labels = "%b-%y"),
-                #axis.line.y = element_line(color="black", size = 0.3))  
-                axis.line.x = element_blank(),
-                #hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
-                axis.line.y = element_blank())                 
-        ggplotly(g, tooltip="y")
-      })
-      
-      output$district  <- renderText({
-        input$districtfinder
-      })
-      output$sector  <- renderText({
-        input$sectorfinder
-      })
-      output$date1  <- renderText({
-        input$dateRange[1]
-      })
-      output$date2  <- renderText({
-        input$dateRange[2]
-      })
-      
-      output$totalText  <- renderText({
-        paste(as.character(length(bxw_data$Has.BXW)))
-      })
-      output$bxwText  <- renderText({
-        paste(as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW)))
-      })
-      
-      output$change  <- renderText({
-        paste(as.character(length((bxw_data[which(bxw_data$Has.BXW == "YES"), ])$Has.BXW)))
-      })
-      
-      output$change  <- renderText({
-        
-        if (input$dateRange[1] <= "2019-10-03"){
-          paste( "No previously existing data")
-        }else if(input$dateRange[1] > Sys.time()){
-          paste( "No data")
-        }else if (input$dateRange[1] > "2019-10-03"){
-          dat1 <-  bxw_data[which(bxw_data$Date.Created > input$dateRange[1] ), ]
-          leg1<- length((dat1[which(dat1$Has.BXW == "YES"), ])$Has.BXW)
-          dat2 <-  bxw_data_e[which(bxw_data_e$Date.Created < input$dateRange[1] ), ]
-          leg2<- length((dat2[which(dat2$Has.BXW == "YES"), ])$Has.BXW)
-          cha<-((leg1-leg2)/(leg1+leg2))*100
-          paste(as.character(format(round(cha, 2), nsmall = 2)),"%")
-          
-        }
-      })
-      
+    if (is_all_districts()) {
+      return(NULL)
     }
     
+    sector_choices <- bxw_data_e %>%
+      filter(District == input$districtfinder) %>%
+      pull(Sector) %>%
+      as.character() %>%
+      na.omit() %>%
+      unique() %>%
+      sort()
     
-    
+    selectInput(
+      "sectorfinder",
+      "Sector",
+      choices = c("All Sectors", sector_choices),
+      selected = "All Sectors"
+    )
   })
-  output$report <- downloadHandler(
-    # For PDF output, change this to "report.pdf"
-    filename = "report.pdf",
-    content = function(file) {
-      withProgress(message = "Downloading...", {
-        # Copy the report file to a temporary directory before processing it, in
-        # case we don't have write permissions to the current working dir (which
-        # can happen when deployed).
-        tempReport <- file.path("./data", "report.Rmd")
-        file.copy("report.Rmd", tempReport, overwrite = TRUE)
-        
-        # Set up parameters to pass to Rmd document
-        params <- list(c = input$districtfinder, d = input$sectorfinder, e = input$dateRange[1], f = input$dateRange[2] )
-        #params <- list(report = uiOutput("map","graph","totalText", "bxwText", "change"))
-        # Knit the document, passing in the `params` list, and eval it in a
-        # child of the global environment (this isolates the code in the document
-        # from the code in this app).
-        rmarkdown::render(tempReport, output_file = file,
-                          params = params,
-                          envir = new.env(parent = globalenv())
-        )
-      })
+  
+  # Reset all filters in one click.
+  observeEvent(input$reset_filters, {
+    updateSelectInput(
+      session, "districtfinder",
+      choices = district_choices,
+      selected = "All Districts"
+    )
+    updateDateRangeInput(
+      session, "dateRange",
+      start = APP_START_DATE,
+      end = APP_END_DATE
+    )
+  })
+  
+  # Shared reactive dataset: every KPI, chart, and map uses this same view.
+  filtered_data <- reactive({
+    req(input$dateRange)
+    
+    d <- bxw_data_e %>%
+      filter(
+        Date.Created >= as.Date(input$dateRange[1]),
+        Date.Created <= as.Date(input$dateRange[2])
+      )
+    
+    if (!is_all_districts()) {
+      d <- d %>% filter(District == input$districtfinder)
       
+      if (!is.null(input$sectorfinder) && input$sectorfinder != "All Sectors") {
+        d <- d %>% filter(Sector == input$sectorfinder)
+      }
+    }
+    
+    d
+  })
+  
+  # Same geographic filter as the selected view, but for any supplied dates.
+  geography_filtered_data <- function(start_date, end_date) {
+    d <- bxw_data_e %>%
+      filter(Date.Created >= start_date, Date.Created <= end_date)
+    
+    if (!is_all_districts()) {
+      d <- d %>% filter(District == input$districtfinder)
+      
+      if (!is.null(input$sectorfinder) && input$sectorfinder != "All Sectors") {
+        d <- d %>% filter(Sector == input$sectorfinder)
+      }
+    }
+    
+    d
+  }
+  
+  previous_period_data <- reactive({
+    req(input$dateRange)
+    
+    start_date <- as.Date(input$dateRange[1])
+    end_date <- as.Date(input$dateRange[2])
+    period_days <- as.integer(end_date - start_date) + 1L
+    
+    prev_end <- start_date - 1L
+    prev_start <- prev_end - (period_days - 1L)
+    
+    geography_filtered_data(prev_start, prev_end)
+  })
+  
+  # ---- Filter summary -------------------------------------------------------
+  output$filter_summary <- renderUI({
+    district_label <- if (is.null(input$districtfinder)) "All Districts" else input$districtfinder
+    sector_label <- if (
+      is_all_districts() || is.null(input$sectorfinder)
+    ) "All Sectors" else input$sectorfinder
+    
+    div(
+      class = "filter-summary",
+      div(tags$b("District: "), district_label),
+      div(tags$b("Sector: "), sector_label),
+      div(
+        tags$b("Period: "),
+        format(as.Date(input$dateRange[1]), "%d %b %Y"),
+        " – ",
+        format(as.Date(input$dateRange[2]), "%d %b %Y")
+      )
+    )
+  })
+  
+  output$data_quality_summary <- renderUI({
+    div(
+      class = "data-quality-note",
+      div(tags$strong("Latest observation: "), format(latest_data_date, "%d %b %Y")),
+      # div(
+      #   tags$strong("Spatial QA: "),
+      #   if (country_excluded_n == 0) {
+      #     "All coordinate records fall within Rwanda."
+      #   } else {
+      #     paste0(
+      #       format(country_excluded_n, big.mark = ","),
+      #       " invalid/out-of-country record",
+      #       ifelse(country_excluded_n == 1, " was", "s were"),
+      #       " excluded from every dashboard output."
+      #     )
+      #   }
+      # )
+    )
+  })
+  
+  output$map_meta <- renderUI({
+    d <- filtered_data()
+    positives <- sum(d$Has.BXW == "YES", na.rm = TRUE)
+    valid_diagnoses <- sum(d$Has.BXW %in% c("YES", "NO"), na.rm = TRUE)
+    rate <- if (valid_diagnoses > 0) positives / valid_diagnoses else 0
+    
+    span(
+      class = "map-meta",
+      paste0(
+        format(nrow(d), big.mark = ","), " observations  •  ",
+        scales::percent(rate, accuracy = 0.1), " positive  •  country-validated"
+      )
+    )
+  })
+  
+  # ---- KPI outputs ----------------------------------------------------------
+  output$totalText <- renderText({
+    format(nrow(filtered_data()), big.mark = ",")
+  })
+  
+  output$bxwText <- renderText({
+    d <- filtered_data()
+    format(sum(d$Has.BXW == "YES", na.rm = TRUE), big.mark = ",")
+  })
+  
+  output$farmerT <- renderText({
+    d <- filtered_data()
+    if ("Farmer" %in% names(d)) {
+      format(dplyr::n_distinct(d$Farmer, na.rm = TRUE), big.mark = ",")
+    } else {
+      "—"
+    }
+  })
+  
+  output$change <- renderText({
+    current_positive <- sum(filtered_data()$Has.BXW == "YES", na.rm = TRUE)
+    previous_positive <- sum(previous_period_data()$Has.BXW == "YES", na.rm = TRUE)
+    
+    if (previous_positive == 0 && current_positive == 0) {
+      return("0.0%")
+    }
+    
+    if (previous_positive == 0 && current_positive > 0) {
+      return("New")
+    }
+    
+    pct_change <- ((current_positive - previous_positive) / previous_positive) * 100
+    paste0(ifelse(pct_change > 0, "+", ""), format(round(pct_change, 1), nsmall = 1), "%")
+  })
+  
+  # Keep report.Rmd-compatible text outputs available if it uses them.
+  output$district <- renderText(input$districtfinder)
+  output$sector <- renderText({
+    if (is_all_districts() || is.null(input$sectorfinder)) "All" else input$sectorfinder
+  })
+  output$date1 <- renderText(input$dateRange[1])
+  output$date2 <- renderText(input$dateRange[2])
+  
+  # ---- Map ------------------------------------------------------------------
+  output$map <- renderLeaflet({
+    d <- filtered_data()
+    
+    m <- leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
+      addTiles(
+        urlTemplate = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+        attribution = paste0(
+          "&copy; <a href=\"https://stadiamaps.com/\" target=\"_blank\">Stadia Maps</a>, ",
+          "&copy; <a href=\"https://openmaptiles.org/\" target=\"_blank\">OpenMapTiles</a>, ",
+          "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">OpenStreetMap</a> contributors"
+        ),
+        options = tileOptions(maxZoom = 20)
+      )
+    
+    if (!is.null(rwa_sf)) {
+      m <- m %>% addPolygons(
+        data = rwa_sf,
+        color = "#68766B",
+        weight = 1,
+        opacity = 0.8,
+        fillOpacity = 0.03
+      )
+    }
+    
+    if (!is.null(rwad_sf)) {
+      m <- m %>% addPolygons(
+        data = rwad_sf,
+        color = "#8B988E",
+        weight = 0.8,
+        opacity = 0.55,
+        fillOpacity = 0,
+        label = ~NAME_2
+      )
+    }
+    
+    # Highlight the selected district.
+    if (!is_all_districts() && !is.null(rwad_sf)) {
+      selected_boundary <- rwad_sf %>%
+        filter(NAME_2 == input$districtfinder)
+      
+      if (nrow(selected_boundary) > 0) {
+        m <- m %>% addPolygons(
+          data = selected_boundary,
+          color = "#6FCF62",
+          weight = 3,
+          opacity = 1,
+          fillColor = "#38A84F",
+          fillOpacity = 0.06
+        )
+      }
+    }
+    
+    if (nrow(d) > 0) {
+      popup_text <- paste0(
+        "<div style='min-width:190px;line-height:1.45'>",
+        "<div style='font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#AAB5AA;margin-bottom:4px'>Plant diagnosis</div>",
+        "<b>BXW status:</b> ", dplyr::case_when(
+          d$Has.BXW == "YES" ~ "Positive",
+          d$Has.BXW == "NO" ~ "Negative",
+          TRUE ~ "Unknown"
+        ),
+        "<br><b>Date:</b> ", format(d$Date.Created, "%d %b %Y"),
+        if ("District" %in% names(d)) paste0("<br><b>District:</b> ", d$District) else "",
+        if ("Sector" %in% names(d)) paste0("<br><b>Sector:</b> ", d$Sector) else "",
+        "</div>"
+      )
+      d$.popup <- popup_text
+      
+      # Keep all diagnosis observations in one main map layer.
+      # Status is still shown by colour, but positive/negative points are not
+      # separated into different overlay groups or layer controls.
+      d$.status <- dplyr::case_when(
+        d$Has.BXW == "YES" ~ "Positive",
+        d$Has.BXW == "NO" ~ "Negative",
+        TRUE ~ "Unknown"
+      )
+      
+      diagnosis_palette <- leaflet::colorFactor(
+        palette = c(
+          "Negative" = "#38A84F",
+          "Positive" = "#D94343",
+          "Unknown"  = "#8B988E"
+        ),
+        domain = c("Negative", "Positive", "Unknown")
+      )
+      
+      m <- m %>% addCircleMarkers(
+        data = d,
+        lng = ~Longitude,
+        lat = ~Latitude,
+        radius = 4.2,
+        stroke = TRUE,
+        weight = 0.8,
+        color = "#F5F7F4",
+        opacity = 0.65,
+        fillColor = ~diagnosis_palette(.status),
+        fillOpacity = 0.88,
+        popup = ~.popup,
+        group = "Plant diagnoses"
+      )
+      
+      legend_values <- c("Negative", "Positive")
+      if (any(d$.status == "Unknown")) {
+        legend_values <- c(legend_values, "Unknown")
+      }
+      
+      m <- m %>% addLegend(
+        position = "bottomright",
+        title = "BXW diagnosis",
+        colors = unname(diagnosis_palette(legend_values)),
+        labels = legend_values,
+        opacity = 1
+      )
+    }
+    
+    m <- m %>%
+      addScaleBar(position = "bottomleft", options = scaleBarOptions(imperial = FALSE)) %>%
+      addEasyButton(
+        easyButton(
+          icon = "fa-crosshairs",
+          title = "Use my location",
+          onClick = JS("function(btn, map){ map.locate({setView: true, maxZoom: 12}); }")
+        )
+      )
+    
+    # Fit the map to the selected geography.
+    target <- NULL
+    if (!is_all_districts() && !is.null(rwad_sf)) {
+      target <- rwad_sf %>% filter(NAME_2 == input$districtfinder)
+    } else if (!is.null(rwa_sf)) {
+      target <- rwa_sf
+    }
+    
+    if (!is.null(target) && nrow(target) > 0) {
+      bb <- sf::st_bbox(target)
+      m <- m %>% fitBounds(bb[["xmin"]], bb[["ymin"]], bb[["xmax"]], bb[["ymax"]])
+    }
+    
+    m
+  })
+  
+  # ---- Chart data -----------------------------------------------------------
+  monthly_positive <- reactive({
+    d <- filtered_data() %>% filter(Has.BXW == "YES")
+    
+    start_month <- floor_date(as.Date(input$dateRange[1]), "month")
+    end_month <- floor_date(as.Date(input$dateRange[2]), "month")
+    months <- seq(start_month, end_month, by = "month")
+    
+    counts <- d %>%
+      mutate(month = floor_date(Date.Created, "month")) %>%
+      count(month, name = "count")
+    
+    tibble(month = months) %>%
+      left_join(counts, by = "month") %>%
+      mutate(
+        count = tidyr::replace_na(count, 0L),
+        rolling_3m = zoo::rollmean(count, k = 3, fill = NA, align = "right")
+      )
+  })
+  
+  # ---- Monthly positive trend ----------------------------------------------
+  output$graph <- renderPlotly({
+    d <- monthly_positive()
+    
+    plot_ly() %>%
+      add_trace(
+        data = d,
+        x = ~month,
+        y = ~count,
+        type = "scatter",
+        mode = "lines+markers",
+        name = "Monthly positives",
+        line = list(color = "#D94343", width = 2.8),
+        marker = list(color = "#FFD0D0", size = 6.5),
+        fill = "tozeroy",
+        fillcolor = "rgba(217,67,67,0.08)",
+        hovertemplate = "%{x|%b %Y}<br><b>%{y}</b> positive diagnoses<extra></extra>"
+      ) %>%
+      add_trace(
+        data = d,
+        x = ~month,
+        y = ~rolling_3m,
+        type = "scatter",
+        mode = "lines",
+        name = "3-month average",
+        line = list(color = "#F5D547", width = 2, dash = "dot"),
+        hovertemplate = "%{x|%b %Y}<br><b>%{y:.1f}</b> 3-month average<extra></extra>"
+      ) %>%
+      layout(
+        legend = list(orientation = "h", x = 0, y = 1.12),
+        margin = list(l = 55, r = 20, t = 35, b = 55),
+        xaxis = list(title = "", gridcolor = "rgba(170,181,170,0.10)"),
+        yaxis = list(title = "Positive diagnoses", rangemode = "tozero", gridcolor = "rgba(170,181,170,0.10)"),
+        paper_bgcolor = "rgba(0,0,0,0)",
+        plot_bgcolor = "rgba(0,0,0,0)",
+        font = list(color = "#DCE5DC")
+      ) %>%
+      config(displayModeBar = FALSE)
+  })
+  
+  # ---- Diagnosis status donut ----------------------------------------------
+  output$status_chart <- renderPlotly({
+    d <- filtered_data() %>%
+      mutate(status = case_when(
+        Has.BXW == "YES" ~ "Positive",
+        Has.BXW == "NO" ~ "Negative",
+        TRUE ~ "Unknown"
+      )) %>%
+      count(status, name = "count")
+    
+    if (nrow(d) == 0) {
+      return(plotly_empty(type = "scatter", mode = "markers") %>%
+               layout(annotations = list(list(
+                 text = "No diagnoses in this view",
+                 x = 0.5, y = 0.5, showarrow = FALSE,
+                 font = list(color = "#AAB5AA")
+               ))))
+    }
+    
+    d <- d %>%
+      mutate(color = case_when(
+        status == "Positive" ~ "#D94343",
+        status == "Negative" ~ "#38A84F",
+        TRUE ~ "#8B988E"
+      ))
+    
+    positive_n <- sum(d$count[d$status == "Positive"], na.rm = TRUE)
+    valid_n <- sum(d$count[d$status %in% c("Positive", "Negative")], na.rm = TRUE)
+    positive_rate <- if (valid_n > 0) positive_n / valid_n else 0
+    
+    plot_ly(
+      d,
+      labels = ~status,
+      values = ~count,
+      type = "pie",
+      hole = 0.70,
+      marker = list(colors = d$color),
+      textinfo = "label+percent",
+      hovertemplate = "%{label}<br><b>%{value}</b> diagnoses<extra></extra>"
+    ) %>%
+      layout(
+        showlegend = FALSE,
+        margin = list(l = 20, r = 20, t = 20, b = 20),
+        annotations = list(list(
+          text = paste0(
+            "<b>", scales::percent(positive_rate, accuracy = 0.1), "</b>",
+            "<br><span style='font-size:11px;color:#AAB5AA'>positive</span>"
+          ),
+          x = 0.5, y = 0.5, showarrow = FALSE,
+          font = list(size = 18, color = "#F5F7F4")
+        )),
+        paper_bgcolor = "rgba(0,0,0,0)",
+        plot_bgcolor = "rgba(0,0,0,0)",
+        font = list(color = "#DCE5DC")
+      ) %>%
+      config(displayModeBar = FALSE)
+  })
+  
+  # ---- Yearly diagnoses -----------------------------------------------------
+  output$graph2 <- renderPlotly({
+    d <- filtered_data() %>%
+      mutate(
+        year = year(Date.Created),
+        status = case_when(
+          Has.BXW == "YES" ~ "Positive",
+          Has.BXW == "NO" ~ "Negative",
+          TRUE ~ "Unknown"
+        )
+      ) %>%
+      count(year, status, name = "diagnoses")
+    
+    if (nrow(d) == 0) return(plotly_empty())
+    
+    
+    positive <- d %>% filter(status == "Positive")
+    negative <- d %>% filter(status == "Negative")
+    unknown <- d %>% filter(status == "Unknown")
+    
+    p <- plot_ly() %>%
+      add_bars(
+        data = positive,
+        x = ~factor(year), y = ~diagnoses,
+        name = "Positive",
+        marker = list(color = "#D94343"),
+        hovertemplate = "%{x}<br><b>%{y}</b> positive<extra></extra>"
+      ) %>%
+      add_bars(
+        data = negative,
+        x = ~factor(year), y = ~diagnoses,
+        name = "Negative",
+        marker = list(color = "#38A84F"),
+        hovertemplate = "%{x}<br><b>%{y}</b> negative<extra></extra>"
+      )
+      
+    
+    if (nrow(unknown) > 0) {
+      p <- p %>% add_bars(
+        data = unknown,
+        x = ~factor(year), y = ~diagnoses,
+        name = "Unknown",
+        marker = list(color = "#8B988E"),
+        hovertemplate = "%{x}<br><b>%{y}</b> unknown<extra></extra>"
+      )
+    }
+    
+    p %>%
+      layout(
+        barmode = "stack",
+        legend = list(orientation = "h", x = 0, y = 1.12),
+        margin = list(l = 50, r = 15, t = 35, b = 50),
+        xaxis = list(title = ""),
+        yaxis = list(title = "Diagnoses", rangemode = "tozero", gridcolor = "rgba(170,181,170,0.10)"),
+        paper_bgcolor = "rgba(0,0,0,0)",
+        plot_bgcolor = "rgba(0,0,0,0)",
+        font = list(color = "#DCE5DC")
+      ) %>%
+      config(displayModeBar = FALSE)
+  })
+  
+  # ---- Unique users by year -------------------------------------------------
+  output$graph3 <- renderPlotly({
+    d <- filtered_data()
+    
+    if (!"Farmer" %in% names(d)) {
+      return(plotly_empty(type = "scatter", mode = "markers") %>%
+               layout(annotations = list(list(
+                 text = "Farmer field not available",
+                 x = 0.5, y = 0.5, showarrow = FALSE,
+                 font = list(color = "#8B988E")
+               ))))
+    }
+    
+    annual_users <- d %>%
+      mutate(year = year(Date.Created)) %>%
+      group_by(year) %>%
+      summarise(users = n_distinct(Farmer, na.rm = TRUE), .groups = "drop")
+    
+    plot_ly(
+      annual_users,
+      x = ~factor(year),
+      y = ~users,
+      type = "bar",
+      marker = list(color = "#F2A33A"),
+      hovertemplate = "%{x}<br><b>%{y}</b> unique users<extra></extra>"
+    ) %>%
+      layout(
+        margin = list(l = 50, r = 15, t = 20, b = 50),
+        xaxis = list(title = ""),
+        yaxis = list(title = "Unique users", rangemode = "tozero", gridcolor = "rgba(170,181,170,0.10)"),
+        paper_bgcolor = "rgba(0,0,0,0)",
+        plot_bgcolor = "rgba(0,0,0,0)",
+        font = list(color = "#DCE5DC")
+      ) %>%
+      config(displayModeBar = FALSE)
+  })
+  
+  # ---- Gender distribution --------------------------------------------------
+  output$pie <- renderPlotly({
+    d <- filtered_data()
+    
+    # Recode the Kinyarwanda gender values used in the source data:
+    # Gabo = Male; Gore = Female. Values such as "Gistina Gabo" and
+    # "Gistina Gore" are handled using case-insensitive text matching.
+    if ("Gender" %in% names(d)) {
+      gender_data <- d %>%
+        filter(!is.na(Gender), trimws(as.character(Gender)) != "") %>%
+        mutate(
+          Gender_display = case_when(
+            grepl("gabo", as.character(Gender), ignore.case = TRUE) ~ "Male",
+            grepl("gore", as.character(Gender), ignore.case = TRUE) ~ "Female",
+            TRUE ~ "Other / unknown"
+          )
+        ) %>%
+        count(Gender_display, name = "count") %>%
+        mutate(
+          Gender_display = factor(
+            Gender_display,
+            levels = c("Male", "Female", "Other / unknown")
+          ),
+          color = case_when(
+            Gender_display == "Male" ~ "#F2A33A",
+            Gender_display == "Female" ~ "#F5D547",
+            TRUE ~ "#8B988E"
+          )
+        ) %>%
+        arrange(Gender_display)
+    } else {
+      gender_data <- tibble(
+        Gender_display = factor(character(), levels = c("Male", "Female", "Other / unknown")),
+        count = integer(),
+        color = character()
+      )
+    }
+    
+    if (nrow(gender_data) == 0) {
+      return(plotly_empty(type = "scatter", mode = "markers") %>%
+               layout(annotations = list(list(
+                 text = "Gender data not available",
+                 x = 0.5, y = 0.5, showarrow = FALSE,
+                 font = list(color = "#8B988E")
+               ))))
+    }
+    
+    plot_ly(
+      gender_data,
+      labels = ~Gender_display,
+      values = ~count,
+      type = "pie",
+      hole = 0.58,
+      marker = list(colors = gender_data$color),
+      textinfo = "label+percent",
+      hovertemplate = "%{label}<br><b>%{value}</b> respondents<extra></extra>"
+    ) %>%
+      layout(
+        showlegend = FALSE,
+        margin = list(l = 15, r = 15, t = 20, b = 20),
+        paper_bgcolor = "rgba(0,0,0,0)",
+        plot_bgcolor = "rgba(0,0,0,0)",
+        font = list(color = "#DCE5DC")
+      ) %>%
+      config(displayModeBar = FALSE)
+  })
+  # ---- Report ---------------------------------------------------------------
+  
+  output$report <- downloadHandler(
+    
+    filename = function() {
+      paste0(
+        "BXW_Surveillance_Report_",
+        format(Sys.Date(), "%Y%m%d"),
+        ".pdf"
+      )
+    },
+    
+    content = function(file) {
+      
+      withProgress(
+        message = "Generating BXW surveillance report...",
+        value = 0,
+        {
+          
+          # ------------------------------------------------------------
+          # 1. Prepare report parameters
+          # ------------------------------------------------------------
+          incProgress(0.15, detail = "Preparing report parameters")
+          
+          params <- list(
+            c = input$districtfinder,
+            
+            d = if (
+              is.null(input$sectorfinder) ||
+              input$districtfinder == "All Districts"
+            ) {
+              "All Sectors"
+            } else {
+              input$sectorfinder
+            },
+            
+            e = as.character(input$dateRange[1]),
+            f = as.character(input$dateRange[2])
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 2. Prepare report environment
+          # ------------------------------------------------------------
+          incProgress(0.25, detail = "Preparing report environment")
+          
+          report_env <- new.env(parent = environment())
+          
+          # Objects required by report.Rmd
+          report_env$bxw_data_e <- bxw_data_e
+          report_env$country_boundary_sf <- country_boundary_sf
+          report_env$rwa_shp <- rwa_shp
+          report_env$rwad_shp <- rwad_shp
+          
+          if (exists("country_excluded_n")) {
+            report_env$country_excluded_n <- country_excluded_n
+          }
+          
+          
+          # ------------------------------------------------------------
+          # 3. Find report and project directories
+          # ------------------------------------------------------------
+          incProgress(0.35, detail = "Preparing HTML report")
+          
+          report_path <- normalizePath(
+            "data/report.Rmd",
+            winslash = "/",
+            mustWork = TRUE
+          )
+          
+          project_root <- normalizePath(
+            ".",
+            winslash = "/",
+            mustWork = TRUE
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 4. Create temporary output directory
+          # ------------------------------------------------------------
+          temp_output_dir <- tempfile("bxw_report_")
+          
+          dir.create(
+            temp_output_dir,
+            recursive = TRUE,
+            showWarnings = FALSE
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 5. Render Rmd -> HTML
+          # ------------------------------------------------------------
+          incProgress(0.50, detail = "Rendering report to HTML")
+          
+          rendered_html <- rmarkdown::render(
+            input = report_path,
+            
+            output_format = rmarkdown::html_document(
+              toc = FALSE,
+              self_contained = TRUE
+            ),
+            
+            output_file = "BXW_Surveillance_Report.html",
+            
+            output_dir = temp_output_dir,
+            
+            params = params,
+            
+            envir = report_env,
+            
+            # Allows relative paths inside report.Rmd
+            # to resolve from the Shiny project root.
+            knit_root_dir = project_root,
+            
+            quiet = TRUE,
+            clean = TRUE
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 6. Check HTML was created
+          # ------------------------------------------------------------
+          if (!file.exists(rendered_html)) {
+            stop(
+              "The report could not be rendered to HTML.",
+              call. = FALSE
+            )
+          }
+          
+          
+          # ------------------------------------------------------------
+          # 7. Convert HTML -> PDF using Chrome/Edge
+          #    NO MiKTeX / pdflatex involved
+          # ------------------------------------------------------------
+          incProgress(0.75, detail = "Converting HTML to PDF")
+          
+          pagedown::chrome_print(
+            input = rendered_html,
+            output = file
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 8. Confirm PDF exists
+          # ------------------------------------------------------------
+          incProgress(0.95, detail = "Finalising PDF")
+          
+          if (!file.exists(file)) {
+            stop(
+              "HTML was created successfully, but conversion to PDF failed.",
+              call. = FALSE
+            )
+          }
+          
+          
+          incProgress(1, detail = "Complete")
+        }
+      )
     }
   )
   
   
+  
   session$allowReconnect(TRUE)
-  
-  
-  
+  session$allowReconnect(TRUE)
 }
 
-# Run the application 
 shinyApp(ui = ui, server = server)
-
