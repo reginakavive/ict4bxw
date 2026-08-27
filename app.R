@@ -933,291 +933,32 @@ server <- function(input, output, session) {
       ) %>%
       config(displayModeBar = FALSE)
   })
-  
-  # ---- Report ---------------------------------------------------------------
-  
   output$report <- downloadHandler(
-    
-    filename = function() {
-      paste0(
-        "BXW_Surveillance_Report_",
-        format(Sys.Date(), "%Y%m%d"),
-        ".pdf"
-      )
-    },
-    
+    # For PDF output, change this to "report.pdf"
+    filename = "report.pdf",
     content = function(file) {
+      withProgress(message = "Downloading...", {
+        # Copy the report file to a temporary directory before processing it, in
+        # case we don't have write permissions to the current working dir (which
+        # can happen when deployed).
+        tempReport <- file.path("./data", "report.Rmd")
+        file.copy("report.Rmd", tempReport, overwrite = TRUE)
+        
+        # Set up parameters to pass to Rmd document
+        params <- list(c = input$districtfinder, d = input$sectorfinder, e = input$dateRange[1], f = input$dateRange[2] )
+        #params <- list(report = uiOutput("map","graph","totalText", "bxwText", "change"))
+        # Knit the document, passing in the `params` list, and eval it in a
+        # child of the global environment (this isolates the code in the document
+        # from the code in this app).
+        rmarkdown::render(tempReport, output_file = file,
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
+      })
       
-      withProgress(
-        message = "Generating BXW surveillance report...",
-        value = 0,
-        {
-          
-          # ------------------------------------------------------------
-          # 1. Prepare report parameters
-          # ------------------------------------------------------------
-          incProgress(0.15, detail = "Preparing report parameters")
-          
-          params <- list(
-            c = input$districtfinder,
-            
-            d = if (
-              is.null(input$sectorfinder) ||
-              input$districtfinder == "All Districts"
-            ) {
-              "All Sectors"
-            } else {
-              input$sectorfinder
-            },
-            
-            e = as.character(input$dateRange[1]),
-            f = as.character(input$dateRange[2])
-          )
-          
-          
-          # ------------------------------------------------------------
-          # 2. Prepare report environment
-          # ------------------------------------------------------------
-          incProgress(0.25, detail = "Preparing report environment")
-          
-          report_env <- new.env(parent = environment())
-          
-          # Objects required by report.Rmd
-          report_env$bxw_data_e <- bxw_data_e
-          report_env$country_boundary_sf <- country_boundary_sf
-          report_env$rwa_shp <- rwa_shp
-          report_env$rwad_shp <- rwad_shp
-          
-          if (exists("country_excluded_n")) {
-            report_env$country_excluded_n <- country_excluded_n
-          }
-          
-          
-          # ------------------------------------------------------------
-          # 3. Find report and project directories
-          # ------------------------------------------------------------
-          incProgress(0.35, detail = "Preparing HTML report")
-          
-          report_path <- normalizePath(
-            "data/report.Rmd",
-            winslash = "/",
-            mustWork = TRUE
-          )
-          
-          project_root <- normalizePath(
-            ".",
-            winslash = "/",
-            mustWork = TRUE
-          )
-          
-          
-          # ------------------------------------------------------------
-          # 4. Create temporary output directory
-          # ------------------------------------------------------------
-          temp_output_dir <- tempfile("bxw_report_")
-          
-          dir.create(
-            temp_output_dir,
-            recursive = TRUE,
-            showWarnings = FALSE
-          )
-          
-          
-          # ------------------------------------------------------------
-          # 5. Render Rmd -> HTML
-          # ------------------------------------------------------------
-          incProgress(0.50, detail = "Rendering report to HTML")
-          
-          rendered_html <- rmarkdown::render(
-            input = report_path,
-            
-            output_format = rmarkdown::html_document(
-              toc = FALSE,
-              self_contained = TRUE
-            ),
-            
-            output_file = "BXW_Surveillance_Report.html",
-            
-            output_dir = temp_output_dir,
-            
-            params = params,
-            
-            envir = report_env,
-            
-            # Allows relative paths inside report.Rmd
-            # to resolve from the Shiny project root.
-            knit_root_dir = project_root,
-            
-            quiet = TRUE,
-            clean = TRUE
-          )
-          
-          
-          # ------------------------------------------------------------
-          # 6. Check HTML was created
-          # ------------------------------------------------------------
-          if (!file.exists(rendered_html)) {
-            stop(
-              "The report could not be rendered to HTML.",
-              call. = FALSE
-            )
-          }
-          
-          
-          # ------------------------------------------------------------
-          # 7. Convert HTML -> PDF using Chrome/Edge
-          #    NO MiKTeX / pdflatex involved
-          # ------------------------------------------------------------
-          incProgress(0.75, detail = "Converting HTML to PDF")
-          
-          pagedown::chrome_print(
-            input = rendered_html,
-            output = file
-          )
-          
-          
-          # ------------------------------------------------------------
-          # 8. Confirm PDF exists
-          # ------------------------------------------------------------
-          incProgress(0.95, detail = "Finalising PDF")
-          
-          if (!file.exists(file)) {
-            stop(
-              "HTML was created successfully, but conversion to PDF failed.",
-              call. = FALSE
-            )
-          }
-          
-          
-          incProgress(1, detail = "Complete")
-        }
-      )
     }
   )
-  # output$report <- downloadHandler(
-  #   
-  #   filename = function() {
-  #     paste0(
-  #       "BXW_Surveillance_Report_",
-  #       format(Sys.Date(), "%Y%m%d"),
-  #       ".pdf"
-  #     )
-  #   },
-  #   
-  #   content = function(file) {
-  #     
-  #     withProgress(
-  #       message = "Generating BXW surveillance report...",
-  #       value = 0,
-  #       {
-  #         
-  #         incProgress(0.15, detail = "Preparing report parameters")
-  #         
-  #         params <- list(
-  #           c = input$districtfinder,
-  #           
-  #           d = if (
-  #             is.null(input$sectorfinder) ||
-  #             input$districtfinder == "All Districts"
-  #           ) {
-  #             "All Sectors"
-  #           } else {
-  #             input$sectorfinder
-  #           },
-  #           
-  #           e = as.character(input$dateRange[1]),
-  #           f = as.character(input$dateRange[2])
-  #         )
-  #         
-  #         incProgress(0.25, detail = "Preparing report environment")
-  #         
-  #         # Use the environment containing the Shiny server objects.
-  #         report_env <- new.env(parent = environment())
-  #         
-  #         # Explicitly expose the objects required by report.Rmd.
-  #         report_env$bxw_data_e <- bxw_data_e
-  #         report_env$country_boundary_sf <- country_boundary_sf
-  #         report_env$rwa_shp <- rwa_shp
-  #         report_env$rwad_shp <- rwad_shp
-  #         
-  #         if (exists("country_excluded_n")) {
-  #           report_env$country_excluded_n <- country_excluded_n
-  #         }
-  #         
-  #         incProgress(0.35, detail = "Rendering PDF")
-  #         
-  #         # IMPORTANT:
-  #         # Render the original report.Rmd from the project root.
-  #         # Do NOT copy it into ./data.
-  #         report_path <- normalizePath(
-  #           "data/report.Rmd",
-  #           winslash = "/",
-  #           mustWork = TRUE
-  #         )
-  #         
-  #         project_root <- normalizePath(
-  #           ".",
-  #           winslash = "/",
-  #           mustWork = TRUE
-  #         )
-  #         
-  #         temp_output_dir <- tempfile("bxw_report_")
-  #         dir.create(temp_output_dir, recursive = TRUE)
-  #         
-  #         rendered_file <- rmarkdown::render(
-  #           input = report_path,
-  #           
-  #           # output_format = rmarkdown::pdf_document(
-  #           #   latex_engine = "xelatex",
-  #           #   toc = FALSE,
-  #           #   number_sections = FALSE,
-  #           #   keep_tex = TRUE
-  #           # ),
-  #           output_format = rmarkdown::pdf_document(
-  #             latex_engine = "pdflatex",   
-  #             toc = FALSE,
-  #             number_sections = FALSE,
-  #             keep_tex = TRUE
-  #           ),
-  #           output_file = "BXW_Surveillance_Report.pdf",
-  #           output_dir = temp_output_dir,
-  #           
-  #           params = params,
-  #           
-  #           envir = report_env,
-  #           
-  #           # All relative paths in report.Rmd now resolve from the
-  #           # actual Shiny project directory.
-  #           knit_root_dir = project_root,
-  #           
-  #           quiet = FALSE,
-  #           clean = FALSE
-  #         )
-  #         
-  #         
-  #         incProgress(0.9, detail = "Finalising PDF")
-  #         
-  #         if (!file.exists(rendered_file)) {
-  #           stop(
-  #             "The report was rendered but the PDF output could not be found."
-  #           )
-  #         }
-  #         
-  #         file.copy(
-  #           rendered_file,
-  #           file,
-  #           overwrite = TRUE
-  #         )
-  #         
-  #         incProgress(1, detail = "Complete")
-  #       }
-  #     )
-  #   }
-  # )
-  
-  
   session$allowReconnect(TRUE)
-  
 }
 
 shinyApp(ui = ui, server = server)

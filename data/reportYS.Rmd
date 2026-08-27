@@ -1,0 +1,1293 @@
+---
+params:
+  c: "All Districts"
+  d: "All Sectors"
+  e: "2019-10-01"
+  f: "2026-12-31"
+
+output:
+  html_document:
+    self_contained: true
+    toc: false
+    theme: null
+    highlight: null
+---
+
+<!-- Style layer adapted from the ICT4BXW sample report; analytical content and filtering logic preserved.
+     Footer is absolutely anchored to the physical bottom of each A4 page. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  dpi = 160,
+  fig.retina = 1
+)
+
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(scales)
+
+# ------------------------------------------------------------------
+# Report branding assets. Keep logo.png and footer.png beside this Rmd.
+# With self_contained: true, Pandoc embeds them in the rendered HTML/PDF output.
+# ------------------------------------------------------------------
+ict4bxw_logo_uri <- "logo.png"
+partner_logos_uri <- "footer.png"
+# ------------------------------------------------------------------
+# Colour palette matching the previous report.
+# ------------------------------------------------------------------
+COL_GREEN   <- "#00E52B"
+COL_GREEN2  <- "#38A84F"
+COL_RED     <- "#ED1C24"
+COL_ORANGE  <- "#F5A300"
+COL_PEACH   <- "#FDE2C5"
+COL_GREY    <- "#B8B8B8"
+COL_DARK    <- "#202020"
+COL_MUTED   <- "#5C5C5C"
+COL_GRID    <- "#E3E3E3"
+
+status_colors <- c(
+  "Negative" = COL_GREEN,
+  "Positive" = COL_RED,
+  "Unknown"  = "#8A8A8A"
+)
+
+gender_colors <- c(
+  "Male" = "#FDAA5F",
+  "Female" = COL_PEACH,
+  "Other / unknown" = "#D9D9D9"
+)
+
+theme_sample <- function(base_size = 9) {
+  theme_classic(base_size = base_size) +
+    theme(
+      plot.title = element_text(
+        face = "bold",
+        hjust = 0.5,
+        size = base_size + 1.3,
+        color = COL_DARK
+      ),
+      plot.subtitle = element_text(
+        hjust = 0.5,
+        size = base_size - 0.2,
+        color = COL_MUTED
+      ),
+      axis.title = element_text(face = "bold", color = COL_DARK),
+      axis.text = element_text(color = COL_DARK),
+      legend.title = element_text(face = "bold"),
+      legend.text = element_text(color = COL_DARK),
+      plot.margin = margin(5, 8, 5, 8)
+    )
+}
+
+# ------------------------------------------------------------------
+# Data from the Shiny application.
+# ------------------------------------------------------------------
+if (!exists("bxw_data_e", inherits = TRUE)) {
+  stop(
+    "bxw_data_e is unavailable. Render this report from the BXW Shiny app.",
+    call. = FALSE
+  )
+}
+
+if (!exists("rwa_shp", inherits = TRUE)) {
+  stop(
+    "rwa_shp is unavailable. Render this report from the BXW Shiny app.",
+    call. = FALSE
+  )
+}
+
+all_data <- get("bxw_data_e", inherits = TRUE)
+country_sf <- sf::st_as_sf(get("rwa_shp", inherits = TRUE))
+
+if (is.na(sf::st_crs(country_sf))) {
+  stop("Rwanda boundary layer has no CRS.", call. = FALSE)
+}
+
+country_sf <- country_sf |>
+  sf::st_make_valid() |>
+  sf::st_transform(4326)
+
+all_data$Date.Created <- as.Date(all_data$Date.Created)
+all_data$Has.BXW <- toupper(trimws(as.character(all_data$Has.BXW)))
+
+# Normalise display labels once so they can be used in the overall
+# and selected sections of the report.
+all_data <- all_data |>
+  mutate(
+    Diagnosis = case_when(
+      Has.BXW == "YES" ~ "Positive",
+      Has.BXW == "NO" ~ "Negative",
+      TRUE ~ "Unknown"
+    ),
+    Gender_display = if ("Gender" %in% names(all_data)) {
+      case_when(
+        grepl("gabo", as.character(Gender), ignore.case = TRUE) ~ "Male",
+        grepl("gore", as.character(Gender), ignore.case = TRUE) ~ "Female",
+        grepl("^m(ale)?$", trimws(as.character(Gender)), ignore.case = TRUE) ~ "Male",
+        grepl("^f(emale)?$", trimws(as.character(Gender)), ignore.case = TRUE) ~ "Female",
+        is.na(Gender) | trimws(as.character(Gender)) == "" ~ NA_character_,
+        TRUE ~ "Other / unknown"
+      )
+    } else {
+      NA_character_
+    }
+  )
+
+# District boundaries, when available.
+district_sf <- NULL
+if (exists("rwad_shp", inherits = TRUE)) {
+  district_sf <- tryCatch({
+    x <- sf::st_as_sf(get("rwad_shp", inherits = TRUE))
+    if (is.na(sf::st_crs(x))) stop("District layer has no CRS")
+    x |>
+      sf::st_make_valid() |>
+      sf::st_transform(4326)
+  }, error = function(e) NULL)
+}
+
+safe_chr <- function(x, fallback = "") {
+  if (is.null(x) || length(x) == 0 || all(is.na(x))) return(fallback)
+  z <- as.character(x[[1]])
+  if (!nzchar(trimws(z))) fallback else z
+}
+
+selected_district <- safe_chr(params$c, "All Districts")
+if (selected_district %in% c("All", "All Districts")) {
+  selected_district <- "All Districts"
+}
+
+selected_sector <- safe_chr(params$d, "All Sectors")
+if (selected_sector %in% c("All", "All Sectors")) {
+  selected_sector <- "All Sectors"
+}
+
+start_date <- as.Date(params$e)
+end_date <- as.Date(params$f)
+
+if (is.na(start_date) || is.na(end_date)) {
+  stop("Invalid report date parameter.", call. = FALSE)
+}
+
+if (end_date < start_date) {
+  stop("Report end date is before the start date.", call. = FALSE)
+}
+
+apply_geo_filter <- function(d) {
+  if (selected_district != "All Districts") {
+    d <- d |> filter(District == selected_district)
+
+    if (selected_sector != "All Sectors") {
+      d <- d |> filter(Sector == selected_sector)
+    }
+  }
+
+  d
+}
+
+# Overall surveillance data are used on pages 1-4, matching the
+# structure of the previous report. The selected view is used on page 5.
+overall_data <- all_data |>
+  filter(!is.na(Date.Created))
+
+report_data <- all_data |>
+  filter(
+    !is.na(Date.Created),
+    Date.Created >= start_date,
+    Date.Created <= end_date
+  ) |>
+  apply_geo_filter()
+
+# Previous equal-length period for the selected-view change indicator.
+period_days <- as.integer(end_date - start_date) + 1L
+prev_end <- start_date - 1L
+prev_start <- prev_end - (period_days - 1L)
+
+previous_data <- all_data |>
+  filter(
+    !is.na(Date.Created),
+    Date.Created >= prev_start,
+    Date.Created <= prev_end
+  ) |>
+  apply_geo_filter()
+
+# ------------------------------------------------------------------
+# Overall KPIs.
+# ------------------------------------------------------------------
+overall_total <- nrow(overall_data)
+overall_pos <- sum(overall_data$Has.BXW == "YES", na.rm = TRUE)
+
+overall_users <- if ("Farmer" %in% names(overall_data)) {
+  n_distinct(overall_data$Farmer, na.rm = TRUE)
+} else {
+  NA_integer_
+}
+
+overall_start <- if (nrow(overall_data) > 0) {
+  min(overall_data$Date.Created, na.rm = TRUE)
+} else {
+  as.Date(NA)
+}
+
+overall_end <- if (nrow(overall_data) > 0) {
+  max(overall_data$Date.Created, na.rm = TRUE)
+} else {
+  as.Date(NA)
+}
+
+# ------------------------------------------------------------------
+# Selected-view KPIs.
+# ------------------------------------------------------------------
+n_total <- nrow(report_data)
+n_pos <- sum(report_data$Has.BXW == "YES", na.rm = TRUE)
+n_neg <- sum(report_data$Has.BXW == "NO", na.rm = TRUE)
+n_unknown <- n_total - n_pos - n_neg
+
+prev_pos <- sum(previous_data$Has.BXW == "YES", na.rm = TRUE)
+
+change_label <- if (prev_pos == 0 && n_pos == 0) {
+  "0.00 %"
+} else if (prev_pos == 0 && n_pos > 0) {
+  "New"
+} else {
+  z <- ((n_pos - prev_pos) / prev_pos) * 100
+  paste0(
+    ifelse(z > 0, "+", ""),
+    format(round(z, 2), nsmall = 2),
+    " %"
+  )
+}
+
+# ------------------------------------------------------------------
+# Data used by charts.
+# ------------------------------------------------------------------
+yearly_total <- overall_data |>
+  mutate(Year = lubridate::year(Date.Created)) |>
+  count(Year, name = "Count") |>
+  arrange(Year)
+
+yearly_users <- if ("Farmer" %in% names(overall_data)) {
+  overall_data |>
+    mutate(Year = lubridate::year(Date.Created)) |>
+    group_by(Year) |>
+    summarise(
+      Users = n_distinct(Farmer, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    arrange(Year)
+} else {
+  tibble(Year = integer(), Users = integer())
+}
+
+gender_users <- if (
+  "Farmer" %in% names(overall_data) &&
+  "Gender_display" %in% names(overall_data)
+) {
+  overall_data |>
+    filter(
+      !is.na(Farmer),
+      !is.na(Gender_display)
+    ) |>
+    distinct(Farmer, Gender_display) |>
+    count(Gender_display, name = "Users") |>
+    mutate(
+      pct = if (sum(Users) > 0) Users / sum(Users) else 0,
+      Gender_display = factor(
+        Gender_display,
+        levels = c("Male", "Female", "Other / unknown")
+      )
+    ) |>
+    arrange(Gender_display)
+} else {
+  tibble(
+    Gender_display = factor(character()),
+    Users = integer(),
+    pct = numeric()
+  )
+}
+
+monthly_total <- overall_data |>
+  mutate(Month = floor_date(Date.Created, "month")) |>
+  count(Month, name = "Count") |>
+  arrange(Month)
+
+monthly_positive_overall <- overall_data |>
+  filter(Has.BXW == "YES") |>
+  mutate(Month = floor_date(Date.Created, "month")) |>
+  count(Month, name = "Count") |>
+  arrange(Month)
+
+selected_month_seq <- seq(
+  floor_date(start_date, "month"),
+  floor_date(end_date, "month"),
+  by = "month"
+)
+
+selected_monthly_positive <- report_data |>
+  filter(Has.BXW == "YES") |>
+  mutate(Month = floor_date(Date.Created, "month")) |>
+  count(Month, name = "Count") |>
+  right_join(tibble(Month = selected_month_seq), by = "Month") |>
+  arrange(Month) |>
+  mutate(Count = replace_na(Count, 0L))
+
+# ------------------------------------------------------------------
+# Map targets.
+# ------------------------------------------------------------------
+overall_map_target <- country_sf
+
+selected_map_target <- country_sf
+selected_district_sf <- NULL
+
+if (
+  selected_district != "All Districts" &&
+  !is.null(district_sf) &&
+  "NAME_2" %in% names(district_sf)
+) {
+  selected_district_sf <- district_sf |>
+    filter(NAME_2 == selected_district)
+
+  if (nrow(selected_district_sf) > 0) {
+    selected_map_target <- selected_district_sf
+  }
+}
+
+# ------------------------------------------------------------------
+# Reusable page header and footer.
+# ------------------------------------------------------------------
+page_header <- function(left_title) {
+  cat(
+    sprintf(
+      paste0(
+        '<div class="page-header">',
+        '<span class="header-left">%s</span>',
+        '<span class="header-right">Combating Banana Disease Through Digital Technology</span>',
+        '</div>'
+      ),
+      left_title
+    )
+  )
+}
+
+page_footer <- function(page_number) {
+  cat(
+    sprintf(
+      paste0(
+        '<div class="page-footer">',
+        '<img class="partner-logos" src="%s" alt="ICT4BXW partner logos">',
+        '<div class="page-number">%s</div>',
+        '</div>'
+      ),
+      partner_logos_uri,
+      page_number
+    )
+  )
+}
+```
+
+<style>
+@page {
+  size: A4;
+  /* Keep only a very small physical bottom margin so the branded footer
+     sits at the true bottom edge of the PDF page. */
+  margin: 10mm 15mm 3mm 15mm;
+}
+
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: white;
+  color: #202020;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 10.5pt;
+  line-height: 1.28;
+}
+
+body > .container,
+body > .container-fluid,
+.main-container {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/*
+  IMPORTANT: do not force A4 height or overflow:hidden here.
+  Headless Chrome was clipping the report and treating the whole document as
+  one printed page. Explicit print-page-break elements now control pagination.
+*/
+.report-page {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 21mm 0; /* reserve space for footer; content can never occupy it */
+  background: #ffffff;
+  position: relative;
+}
+
+.print-page-break {
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8mm;
+  padding-bottom: 1.7mm;
+  margin-bottom: 6mm;
+  border-bottom: 0.55pt solid #333333;
+  font-size: 9.5pt;
+}
+
+.header-left {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.header-right {
+  font-style: normal;
+  text-align: right;
+}
+
+.page-footer {
+  /* Absolutely anchor the footer to the bottom of each report-page.
+     It is removed from normal flow, so long charts/text cannot push it
+     onto the next physical PDF page. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 19mm;
+  margin: 0 !important;
+  padding: 0;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  background: #ffffff;
+  z-index: 5;
+}
+
+.partner-logos {
+  display: block;
+  width: 145mm;
+  max-width: 100%;
+  height: 13.5mm;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.page-number {
+  margin-top: 0.8mm;
+  font-size: 8.8pt;
+  line-height: 1;
+}
+
+.cover-page {
+  padding-top: 1mm;
+}
+
+.cover-logo {
+  display: block;
+  width: 45mm;
+  height: auto;
+  margin: 0 auto 3mm auto;
+}
+
+.cover-title {
+  margin: 0;
+  text-align: center;
+  font-size: 18pt;
+  font-weight: normal;
+  letter-spacing: 0.15pt;
+}
+
+.cover-date {
+  margin-top: 0.5mm;
+  text-align: center;
+  font-size: 11pt;
+}
+
+.cover-rule {
+  width: 96mm;
+  margin: 5mm auto 5mm auto;
+  border: 0;
+  border-top: 0.6pt solid #333333;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  color: #202020;
+}
+
+.report-page h1 {
+  margin: 0 0 3.5mm 0;
+  font-size: 15pt;
+  font-weight: 700;
+}
+
+.report-page h2 {
+  margin: 3.5mm 0 1.8mm 0;
+  font-size: 13pt;
+  font-weight: 700;
+}
+
+.report-page p {
+  margin: 0 0 2.5mm 0;
+  text-align: left;
+}
+
+.about-text {
+  text-align: justify !important;
+}
+
+.report-intro {
+  margin: 1mm 0 2.8mm 0 !important;
+  padding-top: 1.4mm;
+  border-top: 0.35pt solid #777777;
+  font-size: 9.2pt;
+  line-height: 1.2;
+  text-align: justify !important;
+}
+
+.summary-intro {
+  margin-bottom: 2.2mm !important;
+}
+
+.summary-lines {
+  margin-top: 1mm;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9.8pt;
+  line-height: 1.4;
+}
+
+.figure-intro {
+  margin-bottom: 1.7mm !important;
+}
+
+.figure-caption {
+  margin: 1.3mm 6mm 3.5mm 6mm !important;
+  text-align: center !important;
+  font-size: 9.4pt;
+}
+
+.compact-caption {
+  margin-bottom: 2mm !important;
+}
+
+.selected-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1mm 0 3mm 0;
+  font-size: 10pt;
+}
+
+.selected-table th,
+.selected-table td {
+  text-align: left;
+  padding: 1mm 4mm 1mm 0;
+  border: none;
+}
+
+.selected-table th {
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.selected-summary {
+  margin: 0 0 2.5mm 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9.7pt;
+  line-height: 1.42;
+}
+
+.selected-summary-title {
+  margin: 0 0 1mm 0;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+img {
+  max-width: 100%;
+}
+
+.figure {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.figure img {
+  display: inline-block;
+}
+
+.page-footer img.partner-logos {
+  display: block !important;
+  width: 145mm !important;
+  height: 13.5mm !important;
+  max-height: 13.5mm !important;
+  object-fit: contain;
+  margin: 0 auto !important;
+}
+
+.page2-top-figure img {
+  max-height: 76mm;
+  width: auto;
+}
+
+.page3-figure img {
+  max-height: 72mm;
+  width: auto;
+}
+
+.page4-map img {
+  max-height: 155mm;
+  width: auto;
+}
+
+.page5-map img {
+  max-height: 69mm;
+  width: auto;
+}
+
+.page5-bar img {
+  max-height: 49mm;
+  width: auto;
+}
+
+.small-note {
+  font-size: 8.5pt;
+  color: #555555;
+  margin-top: 1.3mm !important;
+}
+
+@media screen {
+  body {
+    background: #eeeeee;
+  }
+
+  /* Screen preview mirrors one A4 sheet, including the print margins. */
+  .report-page {
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    margin: 8mm auto;
+    padding: 10mm 15mm 24mm 15mm;
+    box-shadow: 0 1.5mm 5mm rgba(0, 0, 0, 0.12);
+    position: relative;
+  }
+
+  .page-footer {
+    left: 15mm;
+    right: 15mm;
+    bottom: 3mm;
+  }
+
+  .print-page-break {
+    height: 1px;
+  }
+}
+
+@media print {
+  html,
+  body {
+    width: auto;
+  }
+
+  /*
+    A4 height is 297 mm. With @page top/bottom margins of 10/3 mm the
+    printable area is 284 mm. Use 283 mm to leave a 1 mm rounding buffer.
+    The footer itself is absolutely positioned at bottom:0 inside this box,
+    which puts the page number about 4 mm from the physical page edge.
+  */
+  .report-page {
+    box-sizing: border-box;
+    width: 100%;
+    height: 283mm;
+    min-height: 283mm;
+    max-height: 283mm;
+    margin: 0;
+    padding: 0 0 21mm 0;
+    box-shadow: none;
+    position: relative;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .page-footer {
+    position: absolute !important;
+    left: 0;
+    right: 0;
+    bottom: 0 !important;
+    height: 19mm;
+    margin: 0 !important;
+  }
+
+  .print-page-break {
+    display: block;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .page-header,
+  .page-footer,
+  .figure,
+  table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+</style>
+
+<div class="report-page cover-page">
+
+```{r cover-logo, results='asis'}
+cat(
+  sprintf(
+    '<img class="cover-logo" src="%s" alt="ICT4BXW logo">',
+    ict4bxw_logo_uri
+  )
+)
+```
+
+<div class="cover-title">BXW OCCURRENCE DISTRIBUTION</div>
+<div class="cover-date">`r format(Sys.Date(), "%d %B, %Y")`</div>
+<hr class="cover-rule">
+
+## About the Project
+
+<p class="about-text">
+ICT4BXW project is a collaboration between the International Institute of Tropical Agriculture (IITA), Bioversity International, the Rwanda Agricultural and Animal Resources Development Board (RAB) and the Leibniz Institute of Agricultural Development in Transition Economies (IAMO). This work received financial support from the German Federal Ministry for Economic Cooperation and Development (BMZ), commissioned and administered through the Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) Fund for International Agricultural Research (FIA).
+</p>
+
+<p class="about-text">
+In an effort to help smallholder farmers fight banana disease, the ICT4BXW project has developed an ICT-based tool to enable an early warning system that provides [near] real-time georeferenced data on the incidence of the banana disease, Banana Xanthomonas Wilt (BXW), for further visualization and pattern analysis, which can guide options for effective policies and/or measures to combat further spread of the disease in the region.
+</p>
+
+<p class="report-intro"><strong>About this report.</strong> This report summarises the country-validated Rwanda BXW surveillance data used by the dashboard. It presents diagnoses and users reached, annual and monthly trends, gender and spatial distributions, and the analysis for the selected district, sector and reporting period. The selected-view change indicator compares the chosen period with the immediately preceding period of equal length.</p>
+
+## Overall Diagnosis Summary
+
+<p class="summary-intro">
+Below is a summary of BXW diagnoses and users reached across all available surveillance years.
+</p>
+
+<div class="summary-lines">
+From: `r ifelse(is.na(overall_start), "-", format(overall_start, "%b %Y"))` &nbsp;&nbsp; To: Present<br>
+Total Diagnosis: `r format(overall_total, big.mark = ",")`<br>
+Total BXW occurrence: `r format(overall_pos, big.mark = ",")`<br>
+Total Users reached: `r ifelse(is.na(overall_users), "-", format(overall_users, big.mark = ","))`
+</div>
+
+```{r footer-page1, results='asis'}
+page_footer(1)
+```
+
+</div>
+
+<div class="report-page">
+
+```{r header-page2, results='asis'}
+page_header("Overall Diagnosis Summary")
+```
+
+<p class="figure-intro">
+Figure 1 below shows total diagnosis for each year.
+</p>
+
+<div class="page2-top-figure">
+
+```{r yearly-total-diagnosis, fig.width=7.4, fig.height=3.45}
+if (nrow(yearly_total) == 0) {
+  plot.new()
+  text(0.5, 0.5, "No diagnosis data are available", col = COL_MUTED)
+} else {
+  ggplot(yearly_total, aes(x = factor(Year), y = Count)) +
+    geom_col(width = 0.70, fill = COL_GREY) +
+    geom_text(
+      aes(label = scales::comma(Count)),
+      vjust = -0.35,
+      size = 3.0
+    ) +
+    scale_y_continuous(
+      labels = scales::comma,
+      expand = expansion(mult = c(0, 0.10))
+    ) +
+    labs(
+      title = "Yearly Total Diagnosis",
+      x = "Year",
+      y = "Count"
+    ) +
+    theme_sample() +
+    theme(
+      axis.text.x = element_text(angle = 55, hjust = 1)
+    )
+}
+```
+
+</div>
+
+<p class="figure-caption">
+Figure 1. Total diagnosis during `r if (nrow(yearly_total) > 0) paste0(min(yearly_total$Year), " to ", max(yearly_total$Year)) else "the surveillance period"` years.
+</p>
+
+<p>
+The graphs below (Figure 2) show total users reached every year
+(overall total users reached: `r ifelse(is.na(overall_users), "-", format(overall_users, big.mark = ","))`)
+and the percentage of overall users reached grouped by gender. This is the number of unique farmers whose farms have been diagnosed over the years.
+</p>
+
+```{r users-and-gender, fig.width=4.2, fig.height=2.65, out.width="48%", fig.show='hold'}
+p_users <- if (nrow(yearly_users) == 0) {
+  ggplot() +
+    annotate("text", x = 0, y = 0, label = "User information unavailable") +
+    theme_void()
+} else {
+  ggplot(yearly_users, aes(x = factor(Year), y = Users)) +
+    geom_col(width = 0.70, fill = COL_GREY) +
+    geom_text(
+      aes(label = scales::comma(Users)),
+      vjust = -0.35,
+      size = 2.5
+    ) +
+    scale_y_continuous(
+      labels = scales::comma,
+      expand = expansion(mult = c(0, 0.12))
+    ) +
+    labs(
+      title = "Yearly Total Unique Users",
+      x = "Year",
+      y = "Count"
+    ) +
+    theme_sample(base_size = 7.6) +
+    theme(
+      axis.text.x = element_text(angle = 55, hjust = 1, size = 6.7),
+      plot.title = element_text(size = 8.2, face = "bold", hjust = 0.5)
+    )
+}
+
+p_gender <- if (nrow(gender_users) == 0 || sum(gender_users$Users) == 0) {
+  ggplot() +
+    annotate("text", x = 0, y = 0, label = "Gender information unavailable") +
+    theme_void()
+} else {
+  ggplot(gender_users, aes(x = "", y = Users, fill = Gender_display)) +
+    geom_col(width = 1, color = "white", linewidth = 0.35) +
+    coord_polar(theta = "y") +
+    geom_text(
+      aes(
+        label = ifelse(
+          pct > 0,
+          scales::percent(pct, accuracy = 0.1),
+          ""
+        )
+      ),
+      position = position_stack(vjust = 0.5),
+      size = 3.0
+    ) +
+    scale_fill_manual(values = gender_colors, drop = FALSE) +
+    labs(
+      title = "Unique Users by Gender",
+      fill = "Gender"
+    ) +
+    theme_void(base_size = 8) +
+    theme(
+      plot.title = element_text(
+        face = "bold",
+        hjust = 0.5,
+        size = 8.5,
+        margin = margin(b = 4)
+      ),
+      legend.position = "right",
+      legend.title = element_text(size = 7.5),
+      legend.text = element_text(size = 7)
+    )
+}
+
+p_users
+p_gender
+```
+
+<p class="figure-caption compact-caption">
+Figure 2. Total unique users/farmers reached during `r if (nrow(yearly_users) > 0) paste0(min(yearly_users$Year), " to ", max(yearly_users$Year)) else "the surveillance period"` years and the overall percentage of male and female unique users/farmers reached.
+</p>
+
+```{r footer-page2, results='asis'}
+page_footer(2)
+```
+
+</div>
+
+<div class="report-page">
+
+```{r header-page3, results='asis'}
+page_header("BXW Diagnosis Trends")
+```
+
+# BXW Diagnosis Trends
+
+<p class="figure-intro">
+The graph below (Figure 3) shows monthly total diagnosis performed for the surveillance period.
+</p>
+
+<div class="page3-figure">
+
+```{r monthly-total-trend, fig.width=7.4, fig.height=3.0}
+if (nrow(monthly_total) == 0) {
+  plot.new()
+  text(0.5, 0.5, "No monthly diagnosis data are available", col = COL_MUTED)
+} else {
+  ggplot(monthly_total, aes(x = Month, y = Count)) +
+    geom_line(color = COL_ORANGE, linewidth = 0.85) +
+    geom_point(color = COL_ORANGE, size = 1.35) +
+    scale_x_date(
+      date_breaks = "2 years",
+      date_labels = "%Y"
+    ) +
+    scale_y_continuous(labels = scales::comma) +
+    labs(
+      title = "Trend of Total BXW Diagnosis",
+      x = NULL,
+      y = "Total Diagnosis"
+    ) +
+    theme_sample()
+}
+```
+
+</div>
+
+<p class="figure-caption">
+Figure 3. Trend line for the total monthly diagnosis.
+</p>
+
+<p class="figure-intro">
+The graph below (Figure 4) shows trend of positive monthly BXW diagnosis for the surveillance period.
+</p>
+
+<div class="page3-figure">
+
+```{r monthly-positive-trend, fig.width=7.4, fig.height=3.0}
+if (nrow(monthly_positive_overall) == 0) {
+  plot.new()
+  text(0.5, 0.5, "No positive monthly BXW data are available", col = COL_MUTED)
+} else {
+  ggplot(monthly_positive_overall, aes(x = Month, y = Count)) +
+    geom_line(color = COL_RED, linewidth = 0.85) +
+    geom_point(color = COL_RED, size = 1.35) +
+    scale_x_date(
+      date_breaks = "2 years",
+      date_labels = "%Y"
+    ) +
+    scale_y_continuous(labels = scales::comma) +
+    labs(
+      title = "Trend of Positive BXW diagnosis",
+      x = NULL,
+      y = "No. of Diagnosis"
+    ) +
+    theme_sample()
+}
+```
+
+</div>
+
+<p class="figure-caption compact-caption">
+Figure 4. Trend line for the positive monthly BXW diagnosis.
+</p>
+
+```{r footer-page3, results='asis'}
+page_footer(3)
+```
+
+</div>
+
+<div class="report-page">
+
+```{r header-page4, results='asis'}
+page_header("Spatial Distribution: BXW Diagnosis")
+```
+
+# Spatial Distribution: BXW Diagnosis
+
+<div class="page4-map">
+
+```{r overall-spatial-map, fig.width=7.5, fig.height=6.2}
+p_overall_map <- ggplot() +
+  geom_sf(
+    data = country_sf,
+    fill = "#EFEFEF",
+    color = "#666666",
+    linewidth = 0.35
+  )
+
+if (!is.null(district_sf)) {
+  p_overall_map <- p_overall_map +
+    geom_sf(
+      data = district_sf,
+      fill = NA,
+      color = "#777777",
+      linewidth = 0.23
+    )
+}
+
+if (nrow(overall_data) > 0) {
+  p_overall_map <- p_overall_map +
+    geom_point(
+      data = overall_data,
+      aes(
+        x = Longitude,
+        y = Latitude,
+        color = Diagnosis
+      ),
+      size = 1.2,
+      alpha = 0.90
+    )
+}
+
+bb_overall <- sf::st_bbox(overall_map_target)
+
+p_overall_map +
+  scale_color_manual(
+    values = status_colors,
+    breaks = c("Negative", "Positive", "Unknown"),
+    drop = FALSE
+  ) +
+  coord_sf(
+    xlim = c(bb_overall[["xmin"]], bb_overall[["xmax"]]),
+    ylim = c(bb_overall[["ymin"]], bb_overall[["ymax"]]),
+    expand = FALSE
+  ) +
+  labs(
+    x = "Longitude",
+    y = "Latitude",
+    color = "Has.BXW"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(
+    panel.grid.major = element_line(color = "white", linewidth = 0.55),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "#EBEBEB", color = NA),
+    legend.position = "right",
+    legend.title = element_text(face = "bold")
+  )
+```
+
+</div>
+
+<p class="figure-caption">
+Figure 6. Spatial Distribution of BXW incidence in Rwanda from
+`r ifelse(is.na(overall_start), "-", format(overall_start, "%b, %Y"))`
+to present.
+</p>
+
+```{r footer-page4, results='asis'}
+page_footer(4)
+```
+
+</div>
+
+<div class="report-page">
+
+```{r header-page5, results='asis'}
+page_header("Analysis for the Selected Region and Time Period")
+```
+
+# Analysis for the Selected Region and Time Period
+
+<table class="selected-table">
+  <thead>
+    <tr>
+      <th>District</th>
+      <th>Sector</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`r ifelse(selected_district == "All Districts", "All", selected_district)`</td>
+      <td>`r ifelse(selected_sector == "All Sectors", "All", selected_sector)`</td>
+      <td>`r format(start_date, "%Y-%m-%d")`</td>
+      <td>`r format(end_date, "%Y-%m-%d")`</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="selected-summary-title">Summary</div>
+
+<div class="selected-summary">
+Total Diagnosis: `r format(n_total, big.mark = ",")`<br>
+Total BXW Occurrence: `r format(n_pos, big.mark = ",")`<br>
+Change BXW Occurrence: `r change_label`
+</div>
+
+<div class="page5-map">
+
+```{r selected-spatial-map, fig.width=6.6, fig.height=3.0}
+p_selected_map <- ggplot() +
+  geom_sf(
+    data = country_sf,
+    fill = "#EFEFEF",
+    color = "#666666",
+    linewidth = 0.35
+  )
+
+if (!is.null(district_sf)) {
+  p_selected_map <- p_selected_map +
+    geom_sf(
+      data = district_sf,
+      fill = NA,
+      color = "#777777",
+      linewidth = 0.23
+    )
+}
+
+if (
+  !is.null(selected_district_sf) &&
+  nrow(selected_district_sf) > 0
+) {
+  p_selected_map <- p_selected_map +
+    geom_sf(
+      data = selected_district_sf,
+      fill = scales::alpha(COL_GREEN2, 0.04),
+      color = "#4C4C4C",
+      linewidth = 0.55
+    )
+}
+
+if (nrow(report_data) > 0) {
+  p_selected_map <- p_selected_map +
+    geom_point(
+      data = report_data,
+      aes(
+        x = Longitude,
+        y = Latitude,
+        color = Diagnosis
+      ),
+      size = 1.2,
+      alpha = 0.90
+    )
+}
+
+bb_selected <- sf::st_bbox(selected_map_target)
+
+p_selected_map +
+  scale_color_manual(
+    values = status_colors,
+    breaks = c("Negative", "Positive", "Unknown"),
+    drop = FALSE
+  ) +
+  coord_sf(
+    xlim = c(bb_selected[["xmin"]], bb_selected[["xmax"]]),
+    ylim = c(bb_selected[["ymin"]], bb_selected[["ymax"]]),
+    expand = FALSE
+  ) +
+  labs(
+    x = "Longitude",
+    y = "Latitude",
+    color = "Has.BXW"
+  ) +
+  theme_minimal(base_size = 8.2) +
+  theme(
+    panel.grid.major = element_line(color = "white", linewidth = 0.45),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "#EBEBEB", color = NA),
+    legend.position = "right",
+    legend.title = element_text(face = "bold", size = 7.8),
+    legend.text = element_text(size = 7.2),
+    axis.title = element_text(size = 7.7),
+    axis.text = element_text(size = 6.8)
+  )
+```
+
+</div>
+
+<div class="page5-bar">
+
+```{r selected-monthly-positive, fig.width=6.8, fig.height=2.15}
+if (nrow(selected_monthly_positive) == 0) {
+  plot.new()
+  text(0.5, 0.5, "No monthly BXW data are available", col = COL_MUTED)
+} else {
+  ggplot(
+    selected_monthly_positive,
+    aes(x = Month, y = Count)
+  ) +
+    geom_col(width = 22, fill = "#606060") +
+    scale_x_date(
+      date_breaks = if (length(selected_month_seq) > 18) {
+        "3 months"
+      } else {
+        "1 month"
+      },
+      date_labels = "%Y-%m"
+    ) +
+    scale_y_continuous(
+      labels = scales::comma,
+      expand = expansion(mult = c(0, 0.08))
+    ) +
+    labs(
+      title = "Monthly BXW occurrence for selected region and time period",
+      x = "Month",
+      y = "Count"
+    ) +
+    theme_sample(base_size = 8) +
+    theme(
+      plot.title = element_text(
+        face = "bold",
+        hjust = 0.5,
+        size = 9.2
+      ),
+      axis.text.x = element_text(
+        angle = 55,
+        hjust = 1,
+        size = 6.8
+      )
+    )
+}
+```
+
+</div>
+
+```{r spatial-quality-note, results='asis'}
+excluded_n <- if (exists("country_excluded_n", inherits = TRUE)) {
+  get("country_excluded_n", inherits = TRUE)
+} else {
+  NA_integer_
+}
+
+if (!is.na(excluded_n) && excluded_n > 0) {
+  cat(
+    sprintf(
+      '<p class="small-note">Spatial data quality: %s invalid/out-of-country coordinate record(s) were excluded upstream from report outputs.</p>',
+      format(excluded_n, big.mark = ",")
+    )
+  )
+}
+```
+
+```{r footer-page5, results='asis'}
+page_footer(5)
+```
+
+</div>
