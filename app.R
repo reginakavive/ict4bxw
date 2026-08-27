@@ -24,7 +24,7 @@ if(!require(png)) install.packages("png", repos = "http://cran.us.r-project.org"
 if(!require(naniar)) install.packages("naniar", repos = "http://cran.us.r-project.org")
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(bslib)) install.packages("bslib", repos = "http://cran.us.r-project.org")
-
+if(!require(pagedown)) install.packages("pagedown", repos = "http://cran.us.r-project.org")
 
 
 # Keep your existing data preparation files unchanged.
@@ -157,12 +157,17 @@ app_theme <- bs_theme(
 ui <- page_sidebar(
   title = div(
     class = "app-title-wrap",
-    div(class = "app-eyebrow", "REAL-TIME SURVEILLANCE"),
+    div(class = "app-eyebrow", ""),
     div(
       class = "app-title-row",
-      span("BXW Surveillance"),
+      span(""),
       span(class = "live-pill", span(class = "live-dot"), "LIVE")
     ),
+    div(
+      class = "app-title-row",
+      span("REAL-TIME BXW SURVEILLANCE")
+    ),
+ 
     div(class = "app-subtitle", "Interactive monitoring of Banana Xanthomonas Wilt observations")
   ),
   
@@ -229,8 +234,7 @@ ui <- page_sidebar(
   ),
   
   # Custom visual polish while keeping Bootstrap responsive behaviour.
-  tags$style(HTML("\n    :root {\n      --panel: #172019;\n      --panel-2: #121914;\n      --border: rgba(170, 181, 170, 0.18);\n      --muted: #AAB5AA;\n    }\n\n    body {\n      background:\n        radial-gradient(circle at 15% 0%, rgba(56,168,79,0.11), transparent 28rem),\n        radial-gradient(circle at 85% 8%, rgba(245,213,71,0.035), transparent 24rem),\n        #101713;\n    }\n\n    .app-title-wrap {\n      padding: 0.35rem 0;\n    }\n\n    .app-eyebrow {\n      color: #6FCF62;\n      font-size: 0.72rem;\n      font-weight: 800;\n      letter-spacing: 0.14em;\n      margin-bottom: 0.15rem;\n    }\n\n    .app-title-row {\n      display: flex;\n      align-items: center;\n      gap: 0.75rem;\n      font-size: 1.45rem;\n      font-weight: 750;\n    }\n\n    .app-subtitle {\n      color: #AAB5AA;\n      font-size: 0.85rem;\n      font-weight: 400;\n      margin-top: 0.15rem;\n    }\n\n    .live-pill {\n      display: inline-flex;\n      align-items: center;\n      gap: 0.35rem;\n      padding: 0.25rem 0.55rem;\n      border: 1px solid rgba(111, 207, 98, 0.35);\n      border-radius: 999px;\n      color: #8FDF7C;\n      background: rgba(56, 168, 79, 0.10);\n      font-size: 0.68rem;\n      font-weight: 800;\n      letter-spacing: 0.08em;\n    }\n\n    .live-dot {\n      width: 0.45rem;\n      height: 0.45rem;\n      border-radius: 50%;\n      background: #38A84F;\n      box-shadow: 0 0 0 0 rgba(56,168,79,0.65);\n      animation: pulse 1.8s infinite;\n    }\n\n    @keyframes pulse {\n      0% { box-shadow: 0 0 0 0 rgba(56,168,79,0.55); }\n      70% { box-shadow: 0 0 0 8px rgba(56,168,79,0); }\n      100% { box-shadow: 0 0 0 0 rgba(56,168,79,0); }\n    }\n\n    .sidebar-heading {\n      font-size: 0.8rem;\n      font-weight: 800;\n      letter-spacing: 0.05em;\n      text-transform: uppercase;\n      color: #E3EADF;\n      margin-bottom: 0.55rem;\n    }\n\n    .sidebar-copy, .filter-summary {\n      color: var(--muted);\n      font-size: 0.84rem;\n      line-height: 1.45;\n    }\n\n    .filter-actions {\n      margin-top: 0.5rem;\n    }\n\n    .report-button-wrap {\n      margin-top: 1rem;\n    }\n\n    .card {\n      background: linear-gradient(180deg, rgba(23,32,25,0.98), rgba(18,25,20,0.98));\n      border: 1px solid var(--border);\n      border-radius: 16px;\n      box-shadow: 0 12px 32px rgba(0,0,0,0.15);\n      overflow: hidden;\n    }\n\n    .card-header {\n      border-bottom: 1px solid var(--border);\n      background: transparent;\n      font-weight: 700;\n      padding: 0.9rem 1rem;\n    }\n\n    .bslib-value-box {\n      border: 1px solid rgba(170,181,170,0.12);\n      border-radius: 16px;\n      box-shadow: 0 10px 26px rgba(0,0,0,0.15);\n    }\n\n    .bslib-value-box .value-box-value {\n      font-size: 2rem;\n      font-weight: 800;\n      line-height: 1.05;\n    }\n\n    .kpi-subtitle {\n      opacity: 0.78;\n      font-size: 0.78rem;\n      margin-bottom: 0;\n    }\n\n    .map-meta {\n      color: var(--muted);\n      font-size: 0.8rem;\n      font-weight: 400;\n    }\n\n    .leaflet-container {\n      background: #101713 !important;\n    }\n\n    .form-control, .form-select {\n      border-radius: 10px;\n      border-color: rgba(170,181,170,0.28);\n    }\n\n    .btn {\n      border-radius: 10px;\n      font-weight: 650;\n    }\n\n    @media (max-width: 768px) {\n      .app-title-row { font-size: 1.15rem; }\n      .app-subtitle { display: none; }\n    }\n  ")),
-  
+  tags$style(HTML(":root{--panel:#172019!important;--panel-2:#121914!important;--border:rgba(170,181,170,.18)!important;--muted:#AAB5AA!important;}body{background:radial-gradient(circle at 15% 0%,rgba(56,168,79,.11),transparent 28rem),radial-gradient(circle at 85% 8%,rgba(245,213,71,.035),transparent 24rem),#101713!important;}.app-title-wrap{padding:.35rem 0!important;}.app-eyebrow{color:#6FCF62!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.14em!important;margin-bottom:.15rem!important;}.app-title-row{display:flex!important;align-items:center!important;gap:.75rem!important;font-size:1.45rem!important;font-weight:750!important;}.app-subtitle{color:#AAB5AA!important;font-size:.85rem!important;font-weight:400!important;margin-top:.15rem!important;}.live-pill{display:inline-flex!important;align-items:center!important;gap:.35rem!important;padding:.25rem .55rem!important;border:1px solid rgba(111,207,98,.35)!important;border-radius:999px!important;color:#8FDF7C!important;background:rgba(56,168,79,.10)!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.08em!important;}.live-dot{width:.45rem!important;height:.45rem!important;border-radius:50%!important;background:#38A84F!important;box-shadow:0 0 0 0 rgba(56,168,79,.65)!important;animation:pulse 1.8s infinite!important;}@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(56,168,79,.55);}70%{box-shadow:0 0 0 8px rgba(56,168,79,0);}100%{box-shadow:0 0 0 0 rgba(56,168,79,0);}}.sidebar-heading{font-size:.8rem!important;font-weight:800!important;letter-spacing:.05em!important;text-transform:uppercase!important;color:#E3EADF!important;margin-bottom:.55rem!important;}.sidebar-copy,.filter-summary{color:var(--muted)!important;font-size:.84rem!important;line-height:1.45!important;}.filter-actions{margin-top:.5rem!important;}.report-button-wrap{margin-top:1rem!important;}.card,.bslib-card,.bxw-card{background:linear-gradient(180deg,rgba(23,32,25,.98),rgba(18,25,20,.98))!important;border:1px solid var(--border)!important;border-radius:16px!important;box-shadow:0 12px 32px rgba(0,0,0,.18)!important;overflow:hidden!important;margin:0!important;}.card-header{border-bottom:1px solid var(--border)!important;background:rgba(18,25,20,.72)!important;font-weight:700!important;padding:.9rem 1rem!important;}.bslib-value-box{border:1px solid rgba(170,181,170,.12)!important;border-radius:16px!important;box-shadow:0 10px 26px rgba(0,0,0,.15)!important;}.bslib-value-box .value-box-value{font-size:2rem!important;font-weight:800!important;line-height:1.05!important;}.kpi-subtitle{opacity:.78!important;font-size:.78rem!important;margin-bottom:0!important;}.map-meta{color:var(--muted)!important;font-size:.8rem!important;font-weight:400!important;}.leaflet-container{background:#101713!important;}.form-control,.form-select{border-radius:10px!important;border-color:rgba(170,181,170,.28)!important;}.btn{border-radius:10px!important;font-weight:650!important;}.bxw-dashboard-shell{width:100%!important;max-width:none!important;padding:.85rem .9rem 1.25rem .9rem!important;display:flex!important;flex-direction:column!important;gap:1.05rem!important;isolation:isolate!important;box-sizing:border-box!important;}.bxw-dashboard-shell *{box-sizing:border-box!important;}.bxw-dashboard-shell .bslib-grid,.bxw-dashboard-shell .grid,.bxw-dashboard-shell .layout-columns,.bxw-dashboard-shell .bxw-kpi-grid,.bxw-dashboard-shell .bxw-chart-grid{gap:1.05rem!important;row-gap:1.05rem!important;column-gap:1.05rem!important;margin:0!important;width:100%!important;box-sizing:border-box!important;}.bxw-dashboard-shell .card,.bxw-dashboard-shell .bslib-card,.bxw-dashboard-shell .bxw-card{margin:0!important;border-radius:16px!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(23,32,25,.98),rgba(18,25,20,.98))!important;border:1px solid rgba(170,181,170,.18)!important;box-shadow:0 12px 32px rgba(0,0,0,.18)!important;}.bxw-dashboard-shell .card-header{padding:.9rem 1rem!important;border-bottom:1px solid rgba(170,181,170,.18)!important;background:rgba(18,25,20,.72)!important;}.bxw-dashboard-shell>.card,.bxw-dashboard-shell>.bslib-card,.bxw-dashboard-shell>.bslib-grid,.bxw-dashboard-shell>.layout-columns{margin-bottom:0!important;}@media(max-width:900px){.bxw-dashboard-shell{padding:.65rem!important;gap:.85rem!important;}.bxw-dashboard-shell .bslib-grid,.bxw-dashboard-shell .bxw-chart-grid{gap:.85rem!important;}}@media(max-width:768px){.app-title-row{font-size:1.15rem!important;}.app-subtitle{display:none!important;}}")),
   # KPI row
   layout_columns(
     col_widths = c(3, 3, 3, 3),
@@ -930,6 +934,7 @@ server <- function(input, output, session) {
   })
   
   # ---- Report ---------------------------------------------------------------
+  
   output$report <- downloadHandler(
     
     filename = function() {
@@ -947,6 +952,9 @@ server <- function(input, output, session) {
         value = 0,
         {
           
+          # ------------------------------------------------------------
+          # 1. Prepare report parameters
+          # ------------------------------------------------------------
           incProgress(0.15, detail = "Preparing report parameters")
           
           params <- list(
@@ -965,12 +973,15 @@ server <- function(input, output, session) {
             f = as.character(input$dateRange[2])
           )
           
+          
+          # ------------------------------------------------------------
+          # 2. Prepare report environment
+          # ------------------------------------------------------------
           incProgress(0.25, detail = "Preparing report environment")
           
-          # Use the environment containing the Shiny server objects.
           report_env <- new.env(parent = environment())
           
-          # Explicitly expose the objects required by report.Rmd.
+          # Objects required by report.Rmd
           report_env$bxw_data_e <- bxw_data_e
           report_env$country_boundary_sf <- country_boundary_sf
           report_env$rwa_shp <- rwa_shp
@@ -980,11 +991,12 @@ server <- function(input, output, session) {
             report_env$country_excluded_n <- country_excluded_n
           }
           
-          incProgress(0.35, detail = "Rendering PDF")
           
-          # IMPORTANT:
-          # Render the original report.Rmd from the project root.
-          # Do NOT copy it into ./data.
+          # ------------------------------------------------------------
+          # 3. Find report and project directories
+          # ------------------------------------------------------------
+          incProgress(0.35, detail = "Preparing HTML report")
+          
           report_path <- normalizePath(
             "data/report.Rmd",
             winslash = "/",
@@ -997,59 +1009,210 @@ server <- function(input, output, session) {
             mustWork = TRUE
           )
           
-          temp_output_dir <- tempfile("bxw_report_")
-          dir.create(temp_output_dir, recursive = TRUE)
           
-          rendered_file <- rmarkdown::render(
+          # ------------------------------------------------------------
+          # 4. Create temporary output directory
+          # ------------------------------------------------------------
+          temp_output_dir <- tempfile("bxw_report_")
+          
+          dir.create(
+            temp_output_dir,
+            recursive = TRUE,
+            showWarnings = FALSE
+          )
+          
+          
+          # ------------------------------------------------------------
+          # 5. Render Rmd -> HTML
+          # ------------------------------------------------------------
+          incProgress(0.50, detail = "Rendering report to HTML")
+          
+          rendered_html <- rmarkdown::render(
             input = report_path,
             
-            # output_format = rmarkdown::pdf_document(
-            #   latex_engine = "xelatex",
-            #   toc = FALSE,
-            #   number_sections = FALSE,
-            #   keep_tex = TRUE
-            # ),
-            output_format = rmarkdown::pdf_document(
-              latex_engine = "pdflatex",   
+            output_format = rmarkdown::html_document(
               toc = FALSE,
-              number_sections = FALSE,
-              keep_tex = TRUE
+              self_contained = TRUE
             ),
-            output_file = "BXW_Surveillance_Report.pdf",
+            
+            output_file = "BXW_Surveillance_Report.html",
+            
             output_dir = temp_output_dir,
             
             params = params,
             
             envir = report_env,
             
-            # All relative paths in report.Rmd now resolve from the
-            # actual Shiny project directory.
+            # Allows relative paths inside report.Rmd
+            # to resolve from the Shiny project root.
             knit_root_dir = project_root,
             
-            quiet = FALSE,
-            clean = FALSE
+            quiet = TRUE,
+            clean = TRUE
           )
           
           
-          incProgress(0.9, detail = "Finalising PDF")
-          
-          if (!file.exists(rendered_file)) {
+          # ------------------------------------------------------------
+          # 6. Check HTML was created
+          # ------------------------------------------------------------
+          if (!file.exists(rendered_html)) {
             stop(
-              "The report was rendered but the PDF output could not be found."
+              "The report could not be rendered to HTML.",
+              call. = FALSE
             )
           }
           
-          file.copy(
-            rendered_file,
-            file,
-            overwrite = TRUE
+          
+          # ------------------------------------------------------------
+          # 7. Convert HTML -> PDF using Chrome/Edge
+          #    NO MiKTeX / pdflatex involved
+          # ------------------------------------------------------------
+          incProgress(0.75, detail = "Converting HTML to PDF")
+          
+          pagedown::chrome_print(
+            input = rendered_html,
+            output = file
           )
+          
+          
+          # ------------------------------------------------------------
+          # 8. Confirm PDF exists
+          # ------------------------------------------------------------
+          incProgress(0.95, detail = "Finalising PDF")
+          
+          if (!file.exists(file)) {
+            stop(
+              "HTML was created successfully, but conversion to PDF failed.",
+              call. = FALSE
+            )
+          }
+          
           
           incProgress(1, detail = "Complete")
         }
       )
     }
   )
+  # output$report <- downloadHandler(
+  #   
+  #   filename = function() {
+  #     paste0(
+  #       "BXW_Surveillance_Report_",
+  #       format(Sys.Date(), "%Y%m%d"),
+  #       ".pdf"
+  #     )
+  #   },
+  #   
+  #   content = function(file) {
+  #     
+  #     withProgress(
+  #       message = "Generating BXW surveillance report...",
+  #       value = 0,
+  #       {
+  #         
+  #         incProgress(0.15, detail = "Preparing report parameters")
+  #         
+  #         params <- list(
+  #           c = input$districtfinder,
+  #           
+  #           d = if (
+  #             is.null(input$sectorfinder) ||
+  #             input$districtfinder == "All Districts"
+  #           ) {
+  #             "All Sectors"
+  #           } else {
+  #             input$sectorfinder
+  #           },
+  #           
+  #           e = as.character(input$dateRange[1]),
+  #           f = as.character(input$dateRange[2])
+  #         )
+  #         
+  #         incProgress(0.25, detail = "Preparing report environment")
+  #         
+  #         # Use the environment containing the Shiny server objects.
+  #         report_env <- new.env(parent = environment())
+  #         
+  #         # Explicitly expose the objects required by report.Rmd.
+  #         report_env$bxw_data_e <- bxw_data_e
+  #         report_env$country_boundary_sf <- country_boundary_sf
+  #         report_env$rwa_shp <- rwa_shp
+  #         report_env$rwad_shp <- rwad_shp
+  #         
+  #         if (exists("country_excluded_n")) {
+  #           report_env$country_excluded_n <- country_excluded_n
+  #         }
+  #         
+  #         incProgress(0.35, detail = "Rendering PDF")
+  #         
+  #         # IMPORTANT:
+  #         # Render the original report.Rmd from the project root.
+  #         # Do NOT copy it into ./data.
+  #         report_path <- normalizePath(
+  #           "data/report.Rmd",
+  #           winslash = "/",
+  #           mustWork = TRUE
+  #         )
+  #         
+  #         project_root <- normalizePath(
+  #           ".",
+  #           winslash = "/",
+  #           mustWork = TRUE
+  #         )
+  #         
+  #         temp_output_dir <- tempfile("bxw_report_")
+  #         dir.create(temp_output_dir, recursive = TRUE)
+  #         
+  #         rendered_file <- rmarkdown::render(
+  #           input = report_path,
+  #           
+  #           # output_format = rmarkdown::pdf_document(
+  #           #   latex_engine = "xelatex",
+  #           #   toc = FALSE,
+  #           #   number_sections = FALSE,
+  #           #   keep_tex = TRUE
+  #           # ),
+  #           output_format = rmarkdown::pdf_document(
+  #             latex_engine = "pdflatex",   
+  #             toc = FALSE,
+  #             number_sections = FALSE,
+  #             keep_tex = TRUE
+  #           ),
+  #           output_file = "BXW_Surveillance_Report.pdf",
+  #           output_dir = temp_output_dir,
+  #           
+  #           params = params,
+  #           
+  #           envir = report_env,
+  #           
+  #           # All relative paths in report.Rmd now resolve from the
+  #           # actual Shiny project directory.
+  #           knit_root_dir = project_root,
+  #           
+  #           quiet = FALSE,
+  #           clean = FALSE
+  #         )
+  #         
+  #         
+  #         incProgress(0.9, detail = "Finalising PDF")
+  #         
+  #         if (!file.exists(rendered_file)) {
+  #           stop(
+  #             "The report was rendered but the PDF output could not be found."
+  #           )
+  #         }
+  #         
+  #         file.copy(
+  #           rendered_file,
+  #           file,
+  #           overwrite = TRUE
+  #         )
+  #         
+  #         incProgress(1, detail = "Complete")
+  #       }
+  #     )
+  #   }
+  # )
   
   
   session$allowReconnect(TRUE)
