@@ -1097,7 +1097,6 @@ server <- function(input, output, session) {
   
   
   session$allowReconnect(TRUE)
-  session$allowReconnect(TRUE)
 }
 
 shinyApp(ui = ui, server = server)
