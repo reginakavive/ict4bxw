@@ -111,25 +111,60 @@ jobs:
           SHINY_ACC_NAME: ${{ secrets.SHINY_ACC_NAME }}
           TOKEN: ${{ secrets.TOKEN }}
           SECRET: ${{ secrets.SECRET }}
+      
         shell: Rscript {0}
         run: |
+          # Map package repository names to valid HTTPS URLs
+          options(repos = c(
+            CRAN = "https://cloud.r-project.org",
+            RSPM = "https://cloud.r-project.org"
+          ))
+      
+          app_files <- c(
+            "app.R",
+            "admin_name_cleaning.R",
+            "dataprep.R",
+            "part.R",
+            "data"
+          )
+      
+          # Validate package repository metadata
+          deps <- rsconnect::appDependencies(
+            appDir = ".",
+            appFiles = app_files
+          )
+      
+          rcpp <- deps[deps$Package == "RcppEigen", ]
+      
+          if (nrow(rcpp) > 0) {
+            cat("RcppEigen dependency:\n")
+            print(rcpp)
+      
+            valid_url <- !is.na(rcpp$Repository) &
+              grepl("^https?://", rcpp$Repository)
+      
+            if (!all(valid_url)) {
+              stop(
+                "RcppEigen has an invalid repository URL: ",
+                paste(rcpp$Repository, collapse = ", ")
+              )
+            }
+          }
+      
+          # Authenticate
           rsconnect::setAccountInfo(
             name = Sys.getenv("SHINY_ACC_NAME"),
             token = Sys.getenv("TOKEN"),
             secret = Sys.getenv("SECRET")
           )
-
+      
+          # Deploy application
           rsconnect::deployApp(
             appDir = ".",
-            appFiles = c(
-              "app.R",
-              "admin_name_cleaning.R",
-              "dataprep.R",
-              "part.R",
-              "data"
-            ),
+            appFiles = app_files,
             appName = "bxwsurveillancettFF",
             forceUpdate = TRUE,
             launch.browser = FALSE,
             logLevel = "verbose"
           )
+
