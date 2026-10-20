@@ -35,7 +35,9 @@ jobs:
         shell: Rscript {0}
         
       - name: Import data
-        run: Rscript -e 'source("firebaseimport.R")'
+        env:
+          FIRE_KEY: ${{ secrets.FIRE_KEY }}
+        run: Rscript firebaseimport.R
         
       - name: Push to shinyapps.io
         run: |          
@@ -44,8 +46,7 @@ jobs:
 
     
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
-          rsconnect::deployApp(appDir = ".",appFiles = c("app.R", "dataprep.R", "part.R", "data"), appName = "bxwsurveillancettFF", forceUpdate = TRUE)
-          # rsconnect::deployApp(appName = 'bxwsurveillancettFF',forceUpdate = TRUE)
+          rsconnect::deployApp(appDir = ".",appFiles = c("app.R", "admin_name_cleaning.R", "dataprep.R","part.R",  "data"), appName = "bxwsurveillancettFF", forceUpdate = TRUE)
           
           install.packages('cronR')
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")

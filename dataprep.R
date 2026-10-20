@@ -28,15 +28,34 @@ rwas_shp <- st_read("data/shp/rwa_sector/Sector.shp")
 distR <- st_read("data/gadm36_RWA_shp/gadm36_RWA_2.shp")
 
 ######Clean Data##########
+
+###### Clean Data ##########
+
 bxw_diagnosis <- na.omit(bxw_diagnosis)
 
-#subset for required cols
-#head(bxw_data)
-diagnosisdata<-bxw_diagnosis
+# Subset for required columns
+diagnosisdata <- bxw_diagnosis
 
-diagnosisdata<-diagnosisdata%>%
-  rename(Has_BXW = Has.BXW,
-         Date_Created = Date.Created)
+# NEW: Clean and validate administrative names
+source("admin_name_cleaning.R", local = TRUE)
+
+# Existing code continues below
+diagnosisdata <- diagnosisdata %>%
+  rename(
+    Has_BXW = Has.BXW,
+    Date_Created = Date.Created
+  )
+
+
+# bxw_diagnosis <- na.omit(bxw_diagnosis)
+# 
+# #subset for required cols
+# #head(bxw_data)
+# diagnosisdata<-bxw_diagnosis
+# 
+# diagnosisdata<-diagnosisdata%>%
+#   rename(Has_BXW = Has.BXW,
+#          Date_Created = Date.Created)
 
 diagnosisdata$Latitude<-as.numeric(diagnosisdata$Latitude)
 diagnosisdata$Longitude<-as.numeric(diagnosisdata$Longitude)

@@ -23,7 +23,13 @@ library(dplyr)
 
 # Your Firebase project URL and API key
 firebase_url <- "https://stepwise-rwanda.firebaseio.com/"
-api_key <- "${{secrets.FIRE_KEY}}" 
+# api_key <- "${{secrets.FIRE_KEY}}" 
+api_key <- Sys.getenv("FIRE_KEY")
+
+if (!nzchar(api_key)) {
+  stop("FIRE_KEY is missing. Aborting data import.")
+}
+
 
 # Function to make a GET request
 firebase_get <- function(path) {
