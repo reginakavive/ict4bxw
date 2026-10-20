@@ -105,7 +105,7 @@ characters_to_remove <- c("Bxw-District 3", "Gdgd","Gjkll","Gsssd", "Gjkll" ,"Sh
 result_df_D2 <- result_df_D2[!grepl(paste(characters_to_remove, collapse = "|"), result_df_D2$district), ]
 
 #misspelled districts... Define letters to be replaced and their replacements
-letters_to_replace <- c("1","Ka"," ","\n","2","9","6","3","5")
+letters_to_replace <- c("1"," ","\n","2","9","6","3","5")
 replacement_letters <- c("","", "","","", "","","","")
 
 # Replace specified letters in the district column

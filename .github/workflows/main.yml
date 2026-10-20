@@ -59,6 +59,14 @@ jobs:
             any::rmarkdown
             any::httr
             any::jsonlite
+            any::AsioHeaders
+            any::cpp11
+            any::geometries
+            any::jsonify
+            any::progress
+            any::rapidjsonr
+            any::RcppEigen
+            any::sfheaders
 
       - name: Import Firebase data
         env:
