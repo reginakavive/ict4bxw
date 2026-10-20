@@ -44,7 +44,8 @@ jobs:
 
     
           rsconnect::setAccountInfo(name="${{secrets.SHINY_ACC_NAME}}", token="${{secrets.TOKEN}}", secret="${{secrets.SECRET}}")
-          rsconnect::deployApp(appName = 'bxwsurveillancettFF',forceUpdate = TRUE)
+          rsconnect::deployApp(appDir = ".",appFiles = c("app.R", "dataprep.R", "part.R", "data"), appName = "bxwsurveillancettFF", forceUpdate = TRUE)
+          # rsconnect::deployApp(appName = 'bxwsurveillancettFF',forceUpdate = TRUE)
           
           install.packages('cronR')
           r <- cronR::cron_rscript("Incidence sms alert/Alert_sectors_clean.R")
